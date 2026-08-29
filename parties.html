@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parties — Greygoose</title>
+  <meta name="description" content="Every greygoose party, upcoming and past, on file." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="styles.css?v=14" />
+</head>
+<body data-page="parties">
+  <header class="site-header" id="top">
+    <div class="site-header__inner">
+      <a href="index.html" class="wordmark">Greygoose</a>
+      <span class="site-header__file" data-subhead></span>
+      <nav class="site-nav">
+        <a href="index.html#members">Members</a>
+        <a href="parties.html" class="is-current">Parties</a>
+        <a href="gallery.html">Gallery</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero hero--sub">
+      <h1 class="hero__title" data-split>PARTIES</h1>
+      <p class="hero__desc" data-reveal>
+        The whole point. Upcoming ones you can still get on the list for, past
+        ones we will not stop talking about.
+      </p>
+      <p class="hero__meta" data-reveal></p>
+    </section>
+
+    <div class="stack-wrap">
+      <div class="stack" id="stack"><!-- party folders injected by site.js --></div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <span>Greygoose</span>
+    <span class="site-footer__mid">Bring something. Take nothing.</span>
+    <span><a href="admin.html">Admin</a> · © 2026</span>
+  </footer>
+
+  <div class="lightbox" id="lightbox" hidden>
+    <button class="lightbox__close" aria-label="Close">&times;</button>
+    <button class="lightbox__nav lightbox__nav--prev" aria-label="Previous">&#8249;</button>
+    <img class="lightbox__img" alt="" />
+    <button class="lightbox__nav lightbox__nav--next" aria-label="Next">&#8250;</button>
+    <span class="lightbox__count"></span>
+  </div>
+
+  <script src="sha256.js?v=14"></script>
+  <script src="gate.js?v=14"></script>
+  <script src="site.js?v=14"></script>
+</body>
+</html>

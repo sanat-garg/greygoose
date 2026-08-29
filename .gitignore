@@ -1,0 +1,12 @@
+# server signing key — never publish this
+.secret
+
+# local snapshots the admin panel writes before each save
+.backups/
+
+# python
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store

@@ -1,0 +1,1048 @@
+/* ============================================================================
+   GREYGOOSE — styles
+   Modelled on mosbyfiles.com:
+   fonts  Founders Grotesk → Space Grotesk · Signifier → Newsreader · IBM Plex Mono
+   ink    #FDFAF7 on #191919 · sheet #FFFCF9 · muted #787A7F
+   motion transform .65s cubic-bezier(.33,1,.68,1)  ← the reference's easing
+   ========================================================================== */
+
+:root {
+  --bg: #191919;
+  --ink: #fdfaf7;
+  --muted: #787a7f;
+  --sheet: #fffcf9;
+  --sheet-ink: #191919;
+  --line: rgba(253, 250, 247, 0.16);
+
+  --blue: #1e4bd7;
+  --green: #0c7866;
+  --purple: #581e70;
+  --red: #d71e1e;
+  --yellow: #ffe927;
+  --black: #000000;
+
+  --gutter: 32px;
+  --header-h: 57px;
+
+  --ease: cubic-bezier(0.33, 1, 0.68, 1);
+  --dur: 0.65s;
+
+  /* Anton carries the big headings; Space Grotesk handles small UI caps */
+  --f-display: "Anton", "Arial Narrow", sans-serif;
+  --f-ui: "Space Grotesk", "Helvetica Neue", sans-serif;
+  --f-serif: "Newsreader", Georgia, "Times New Roman", serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  font-size: 15px;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--f-serif);
+  font-size: 1rem;
+  line-height: 1.25;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; }
+
+/* ---------- Scroll motion primitives ---------------------------------------
+   Everything that animates in shares one easing and duration, the way the
+   reference site does. `.is-in` is added by an IntersectionObserver.        */
+
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(1.4rem);
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+  transition-delay: var(--d, 0s);
+}
+[data-reveal].is-in { opacity: 1; transform: none; }
+
+/* per-character hero reveal — chars slide up out of a clipping mask */
+.char-mask {
+  display: inline-block;
+  overflow: clip;
+  vertical-align: baseline;
+}
+.char {
+  display: inline-block;
+  transform: translateY(105%);
+  transition: transform 0.9s var(--ease);
+  transition-delay: var(--d, 0s);
+  will-change: transform;
+}
+.is-in .char, .char.is-in { transform: none; }
+.word { display: inline-block; white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  [data-reveal], .char, .folder, .scrap { transition: none !important; }
+  [data-reveal] { opacity: 1; transform: none; }
+  .char { transform: none; }
+}
+
+/* ---------- Header ---------------------------------------------------------- */
+
+.site-header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  background: rgba(25, 25, 25, 0.94);
+  z-index: 200;
+}
+.site-header__inner {
+  position: relative;
+  width: 100%;
+  margin: 0 var(--gutter);
+  display: flex;
+  align-items: center;
+}
+.wordmark {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--f-ui);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.055em;
+  font-size: 0.95rem;
+  transition: opacity 0.4s var(--ease);
+}
+/* when a file scrolls under the bar, swap the wordmark for that file's name */
+.site-header__file {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%) translateY(0.5rem);
+  font-family: var(--f-ui);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
+}
+body.show-subhead .wordmark { opacity: 0; }
+body.show-subhead .site-header__file {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.site-nav {
+  margin-left: auto;
+  display: flex;
+  gap: 1.6rem;
+  font-family: var(--f-mono);
+  font-size: 0.9rem;
+}
+.site-nav a { opacity: 0.8; transition: opacity 0.2s; }
+.site-nav a:hover, .site-nav a.is-current { opacity: 1; }
+.site-nav a.is-current { text-decoration: underline; text-underline-offset: 4px; }
+
+/* ---------- Hero --------------------------------------------------------------*/
+
+/* The stack is deliberately pulled up into the hero so the top of the folders
+   is visible before any scrolling — an empty first screen was the whole
+   problem, and it is how the reference site handles it too. */
+.hero {
+  margin: 0 var(--gutter);
+  min-height: 54vh;
+  padding: calc(var(--header-h) + 2rem) 0 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.hero--sub { min-height: 44vh; }
+
+/* a quiet nudge that there is something under the fold */
+.hero__cue {
+  margin: 2.2rem 0 0;
+  font-family: var(--f-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.hero__cue::after {
+  content: "";
+  width: 0.42rem; height: 0.42rem;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  rotate: 45deg;
+  translate: 0 -2px;
+  animation: nudge 2.4s var(--ease) infinite;
+}
+@keyframes nudge {
+  0%, 60%, 100% { translate: 0 -2px; opacity: 0.5; }
+  30% { translate: 0 3px; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero__cue::after { animation: none; }
+}
+
+.hero__title {
+  margin: 0;
+  font-family: var(--f-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: clamp(3rem, 11vw, 9.5rem);
+  line-height: 0.86;
+  letter-spacing: 0.005em;
+}
+.hero--sub .hero__title { font-size: clamp(2.6rem, 8vw, 7rem); }
+
+.hero__desc {
+  margin: 1.9rem 0 0;
+  max-width: 50rem;
+  font-size: clamp(1.05rem, 1.5vw, 1.24rem);
+  line-height: 1.42;
+  color: var(--muted);
+}
+.hero__meta {
+  margin: 2rem 0 0;
+  font-family: var(--f-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ---------- Stack of folders ---------------------------------------------------*/
+
+.stack-wrap { margin: 0 var(--gutter); }
+.stack { position: relative; padding: 2.2rem clamp(1rem, 4.8vw, 4rem) 0; }
+
+.folder {
+  --c: var(--blue);
+  --on: #fff;
+  position: relative;
+  border-radius: 4px 4px 0 0;
+  background: var(--c);
+  color: var(--on);
+
+  /* settle-into-the-stack entrance */
+  opacity: 0;
+  transform: translateY(5rem) scale(0.985);
+  transform-origin: 50% 0;
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+  transition-delay: var(--d, 0s);
+}
+.folder.is-in { opacity: 1; transform: none; }
+
+/* protruding name tabs */
+.folder__tabs {
+  position: absolute;
+  left: 6px;
+  bottom: 100%;
+  display: flex;
+  gap: 3px;
+  max-width: calc(100% - 12px);
+  overflow: hidden;
+}
+.folder__tab {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  border: 0;
+  background: var(--c);
+  color: var(--on);
+  font-family: var(--f-serif);
+  font-size: 1.3rem;
+  /* serif needs real leading — at line-height 1 the descenders in names like
+     "Diego" push the text off-centre in its own tab */
+  line-height: 1.25;
+  padding: 0.34em 0.8em 0.4em;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  white-space: nowrap;
+  opacity: 0.55;
+  transition: opacity 0.25s var(--ease);
+}
+.folder__tab:hover { opacity: 0.85; }
+.folder__tab.is-active { opacity: 1; font-weight: 500; }
+
+/* always-visible cover — a panel, not a strip */
+.folder__cover {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.4rem;
+  min-height: clamp(7rem, 13vh, 10rem);
+  /* the extra bottom room is where the NEXT folder's tabs land, so they
+     never sit on top of this folder's blurb */
+  padding: 1.3rem 1.9rem 2.7rem;
+  cursor: pointer;
+  transition: min-height 0.6s var(--ease), padding 0.6s var(--ease);
+}
+.folder__cover-top {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+.folder__cover-name {
+  font-family: var(--f-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: clamp(1.5rem, 3.2vw, 2.4rem);
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+.folder__names {
+  margin: 0;
+  font-family: var(--f-serif);
+  font-size: 1.05rem;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+}
+.folder__blurb {
+  margin: 0;
+  max-width: 46rem;
+  font-family: var(--f-mono);
+  font-size: 0.76rem;
+  line-height: 1.55;
+  opacity: 0.78;
+  transition: opacity 0.45s var(--ease), max-height 0.6s var(--ease);
+}
+/* once it is open the file itself is the content, so the blurb steps back */
+.folder.is-open .folder__cover { min-height: 0; gap: 0.9rem; padding-bottom: 1.2rem; }
+.folder.is-open .folder__blurb { opacity: 0.55; }
+/* keeps the cover bar from reading as an empty strip */
+.folder__count {
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+.folder__category {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--f-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.folder__chev {
+  width: 0.6rem; height: 0.6rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 0.4s var(--ease);
+}
+.folder.is-open .folder__chev { transform: rotate(225deg); }
+
+/* expandable body — max-height is set from JS so it can be exact */
+.folder__body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.72s var(--ease);
+}
+.folder__body-inner { padding-bottom: 0.4rem; }
+
+/* the open folder lifts off the stack */
+.folder {
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease),
+              box-shadow 0.72s var(--ease);
+  transition-delay: var(--d, 0s);
+}
+.folder.is-open { box-shadow: 0 30px 70px -40px rgba(0, 0, 0, 0.95); }
+
+/* contents settle in slightly after the folder has started opening */
+.file__name,
+.sheet {
+  opacity: 0;
+  translate: 0 1.6rem;
+  transition: opacity 0.55s var(--ease), translate 0.55s var(--ease);
+}
+.file__name { transition-delay: 0.16s; }
+.sheet { transition-delay: 0.22s; }
+
+.folder.is-open .file__name,
+.folder.is-open .sheet { opacity: 1; translate: none; }
+
+/* cross-fade when switching between files inside one folder */
+.folder__host { transition: opacity 0.2s var(--ease); }
+.folder__host.is-swapping { opacity: 0; }
+.folder__host.is-swapping * { transition: none !important; }
+
+
+/* ---------- The file sheet --------------------------------------------------- */
+
+.file { padding: 0 0.6rem 0.6rem; }
+
+.file__name {
+  margin: 0.2rem 1.4rem 1.1rem;
+  font-family: var(--f-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: clamp(2.4rem, 6.5vw, 5rem);
+  line-height: 0.88;
+  letter-spacing: 0.005em;
+}
+
+.sheet {
+  position: relative;
+  background: var(--sheet);
+  color: var(--sheet-ink);
+  border-radius: 4px;
+  padding: 3rem 3rem 3rem 6rem;
+  display: grid;
+  grid-template-columns: 16rem 1fr;
+  gap: 2.4rem 3rem;
+}
+.sheet::before {                       /* punch holes down the binding edge */
+  content: "";
+  position: absolute;
+  left: 2.5rem; top: 2.8rem; bottom: 2.8rem;
+  width: 8px;
+  background-image: radial-gradient(circle, rgba(25, 25, 25, 0.14) 40%, transparent 45%);
+  background-size: 8px 30px;
+  background-repeat: repeat-y;
+}
+
+.sheet__photo {
+  position: relative;
+  aspect-ratio: 247 / 280;
+  background: #e7e2da;
+  overflow: hidden;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.15);
+}
+.sheet__photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sheet__photo::after {                 /* paper clip */
+  content: "";
+  position: absolute;
+  top: -8px; left: 24px;
+  width: 20px; height: 52px;
+  border: 3px solid rgba(25, 25, 25, 0.45);
+  border-radius: 12px;
+  border-bottom-color: transparent;
+}
+
+.record { margin-top: 1.6rem; font-family: var(--f-mono); font-size: 0.95rem; line-height: 1.4; }
+.record__row {
+  padding: 0.62rem 0;
+  border-top: 1px solid rgba(25, 25, 25, 0.16);
+}
+.record__row:last-child { border-bottom: 1px solid rgba(25, 25, 25, 0.16); }
+.record__k { font-weight: 700; }
+
+.sheet__desc { font-size: 1.5rem; line-height: 1.4; }
+.sheet__desc p { margin: 0 0 1rem; }
+.sheet__quote {
+  margin: 1.8rem 0 0;
+  padding-left: 1.1rem;
+  border-left: 2px solid rgba(25, 25, 25, 0.35);
+  font-style: italic;
+  font-size: 1.75rem;
+  line-height: 1.3;
+}
+.sheet__socials { margin-top: 1.6rem; font-family: var(--f-mono); font-size: 0.85rem; }
+.sheet__socials a { border-bottom: 1px solid rgba(25, 25, 25, 0.4); }
+
+.sheet__status {
+  display: inline-block;
+  margin-bottom: 1.2rem;
+  padding: 0.3em 0.8em;
+  border-radius: 999px;
+  font-family: var(--f-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: var(--c);
+  color: var(--on);
+}
+
+/* ---------- Scrapbook ------------------------------------------------------ */
+
+.scrapbook { position: relative; margin: 1.6rem 0 0.4rem; padding: 1rem 1.4rem 2rem; }
+
+.scrap {
+  position: relative;
+  width: min(30rem, 78vw);
+  margin: 0 auto 1.1rem;
+  cursor: grab;
+  touch-action: none;
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease), translate var(--dur) var(--ease);
+  translate: 0 2.5rem;
+  transition-delay: var(--d, 0s);
+}
+.scrap.is-in { opacity: 1; translate: none; }
+.scrap:active { cursor: grabbing; }
+.scrap img { width: 100%; height: auto; display: block; }
+
+.scrap--photo {
+  background: var(--sheet);
+  padding: 12px 12px 46px;
+  box-shadow: 0 12px 30px -14px rgba(0, 0, 0, 0.6);
+}
+.scrap--photo figcaption {
+  position: absolute;
+  left: 16px; right: 16px; bottom: 14px;
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  color: #33312d;
+}
+.scrap--note {
+  background: #de96a1;
+  color: #191111;
+  padding: 2rem 1.7rem 2.6rem;
+  box-shadow: 0 12px 30px -14px rgba(0, 0, 0, 0.55);
+}
+.scrap--note h3 {
+  margin: 0 0 0.7rem;
+  font-family: var(--f-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: 1.7rem;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+.scrap--note p { margin: 0; font-family: var(--f-mono); font-size: 0.92rem; line-height: 1.42; }
+.scrap__clip {
+  position: absolute;
+  top: -14px; left: 50%;
+  width: 26px; height: 60px;
+  margin-left: -13px;
+  border: 4px solid rgba(25, 25, 25, 0.35);
+  border-radius: 14px;
+  border-bottom-color: transparent;
+}
+
+@media (min-width: 900px) {
+  .scrapbook.is-scatter { min-height: var(--scrap-h, 40rem); }
+  .scrapbook.is-scatter .scrap { position: absolute; margin: 0; width: var(--w, 26rem); }
+}
+
+/* ---------- File nav ---------------------------------------------------------*/
+
+.file__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1.6rem 1.4rem 0.4rem;
+  font-family: var(--f-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.file__nav button {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  opacity: 0.8;
+  border-bottom: 1px solid transparent;
+  padding-bottom: 2px;
+  transition: opacity 0.25s var(--ease);
+}
+.file__nav button:hover { opacity: 1; border-bottom-color: currentColor; }
+.file__nav button:disabled { opacity: 0.3; cursor: default; }
+
+/* ---------- Gallery folder -------------------------------------------------- */
+
+.gallery-page {
+  margin: 0 var(--gutter);
+  padding: 0 clamp(1rem, 4.8vw, 4rem) 2rem;
+}
+.gallery-page .gallery-grid { columns: 5 13rem; padding: 0; }
+
+.gallery-grid { columns: 3 16rem; column-gap: 1rem; padding: 0 1.9rem 2rem; }
+.gallery-grid figure {
+  margin: 0 0 1rem;
+  break-inside: avoid;
+  background: var(--sheet);
+  padding: 10px 10px 30px;
+  box-shadow: 0 12px 30px -16px rgba(0, 0, 0, 0.6);
+  rotate: var(--r, 0deg);
+  cursor: zoom-in;
+  opacity: 0;
+  translate: 0 2rem;
+  transition: opacity var(--dur) var(--ease), translate var(--dur) var(--ease),
+              rotate 0.3s var(--ease), scale 0.3s var(--ease);
+  transition-delay: var(--d, 0s);
+}
+.gallery-grid figure.is-in { opacity: 1; translate: none; }
+.gallery-grid figure:hover { rotate: 0deg; scale: 1.02; }
+.gallery-grid img { width: 100%; height: auto; display: block; }
+
+.gallery-add {
+  padding: 0 1.9rem 2rem;
+  font-family: var(--f-mono);
+  font-size: 0.78rem;
+  line-height: 1.6;
+  opacity: 0.85;
+}
+.gallery-add a { border-bottom: 1px solid currentColor; }
+
+/* ---------- Lightbox ------------------------------------------------------- */
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 10, 0.94);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  padding: 5vh 5vw;
+}
+.lightbox[hidden] { display: none; }
+.lightbox__img { max-width: 100%; max-height: 100%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); }
+.lightbox__close {
+  position: absolute;
+  top: 1.4rem; right: 1.8rem;
+  border: 0; background: none;
+  font-size: 2.4rem; line-height: 1;
+  cursor: pointer;
+  opacity: 0.7;
+  z-index: 2;
+}
+.lightbox__close:hover { opacity: 1; }
+
+/* arrows only appear when there is more than one photo to step through */
+.lightbox__nav {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  width: 3.4rem; height: 3.4rem;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: rgba(25, 25, 25, 0.6);
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s var(--ease), background 0.25s var(--ease);
+}
+.lightbox.has-nav .lightbox__nav { opacity: 0.75; pointer-events: auto; }
+.lightbox__nav:hover { opacity: 1; background: var(--ink); color: var(--bg); }
+.lightbox__nav--prev { left: 1.2rem; }
+.lightbox__nav--next { right: 1.2rem; }
+
+.lightbox__count {
+  position: absolute;
+  bottom: 1.6rem; left: 50%;
+  translate: -50% 0;
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+
+/* ---------- Footer -------------------------------------------------------- */
+
+.site-footer {
+  margin: 5rem var(--gutter) 0;
+  align-items: center;
+  padding: 1.6rem 0 3rem;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.site-footer a:hover { color: var(--ink); }
+
+/* ---------- Payment block (inside a party sheet) ---------------------------- */
+
+.pay {
+  margin-top: 2rem;
+  padding: 1.4rem 1.6rem;
+  border: 1px solid rgba(25, 25, 25, 0.2);
+  border-radius: 4px;
+  background: rgba(25, 25, 25, 0.035);
+}
+.pay__label {
+  font-family: var(--f-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(25, 25, 25, 0.55);
+}
+.pay__price {
+  margin: 0.35rem 0 0;
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 2.6rem;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+.pay__note {
+  margin: 0.6rem 0 0;
+  font-family: var(--f-mono);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: rgba(25, 25, 25, 0.7);
+}
+.pay__btn {
+  display: inline-block;
+  margin-top: 1.1rem;
+  padding: 0.75em 1.5em;
+  border: 0;
+  border-radius: 3px;
+  background: var(--c, #1e4bd7);
+  color: var(--on, #fff);
+  font-family: var(--f-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 0.2s var(--ease);
+}
+.pay__btn:hover { opacity: 0.85; }
+/* a washed-out fill vanished on the yellow folder — outline it instead, so it
+   stays readable whatever colour the party's folder happens to be */
+.pay__btn[aria-disabled="true"] {
+  background: none;
+  color: var(--sheet-ink);
+  border: 1px dashed rgba(25, 25, 25, 0.45);
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+.pay__soon {
+  margin: 0.7rem 0 0;
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  color: rgba(25, 25, 25, 0.5);
+}
+
+/* ---------- Access gate ------------------------------------------------------ */
+
+body.is-locked { overflow: hidden; }
+body.is-locked main,
+body.is-locked .site-header,
+body.is-locked .site-footer { filter: blur(9px); pointer-events: none; user-select: none; }
+
+.gate {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6vh var(--gutter);
+  background: rgba(15, 15, 15, 0.93);
+}
+.gate[hidden] { display: none; }
+
+.gate__box { width: min(38rem, 100%); text-align: center; }
+
+.gate__mark {
+  font-family: var(--f-ui);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.055em;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.gate__title {
+  margin: 1.4rem 0 0;
+  font-family: var(--f-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: clamp(2.4rem, 7vw, 4.4rem);
+  line-height: 0.9;
+  letter-spacing: 0.005em;
+}
+.gate__intro {
+  margin: 1rem auto 0;
+  max-width: 34rem;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.45;
+}
+.gate__q {
+  margin: 2.4rem 0 1.1rem;
+  font-size: clamp(1.25rem, 3vw, 1.7rem);
+  line-height: 1.35;
+}
+.gate__form { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.gate__input {
+  flex: 1 1 20rem;
+  max-width: 26rem;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  font-family: var(--f-mono);
+  font-size: 1rem;
+  padding: 0.7em 0.2em;
+  outline: none;
+  text-align: center;
+}
+.gate__input:focus { border-bottom-color: var(--ink); }
+.gate__submit {
+  border: 1px solid var(--line);
+  background: none;
+  border-radius: 3px;
+  padding: 0.7em 1.5em;
+  font-family: var(--f-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+.gate__submit:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+.gate__msg {
+  margin: 1.2rem 0 0;
+  min-height: 1.4em;
+  font-family: var(--f-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: #ff8b8b;
+}
+.gate__swap {
+  margin-top: 1.6rem;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-family: var(--f-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+}
+.gate__swap:hover { color: var(--ink); border-bottom-color: var(--muted); }
+
+.gate__box.is-wrong { animation: shake 0.4s var(--ease); }
+@keyframes shake {
+  0%, 100% { translate: 0; }
+  20% { translate: -9px; }
+  45% { translate: 7px; }
+  70% { translate: -4px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gate__box.is-wrong { animation: none; }
+}
+
+/* ---------- Single-party share page ------------------------------------------ */
+
+.share-banner {
+  margin: 0 var(--gutter);
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.share-banner a { color: var(--ink); border-bottom: 1px solid var(--muted); }
+
+.share-file { margin: 0 var(--gutter); padding: 0 clamp(1rem, 4.8vw, 4rem); }
+.share-file .folder { opacity: 1; transform: none; }
+.share-file .folder__body { max-height: none; }
+.share-file .file__name,
+.share-file .sheet { opacity: 1; translate: none; }
+/* the hero already says the name — don't repeat it on the folder */
+.share-file .folder__cover,
+.share-file .file__nav { display: none; }
+.share-file .folder__body-inner { padding-top: 1.6rem; }
+
+/* ---------- Responsive -------------------------------------------------------*/
+
+@media (max-width: 899px) {
+  :root { --gutter: 16px; }
+
+  .stack { padding: 1.6rem 0 0; }
+  .folder {
+    margin-top: 0.45rem;
+    /* reorder so the name tabs can sit under the cover instead of above it */
+    display: flex;
+    flex-direction: column;
+  }
+  .folder__cover { order: 1; padding: 1.05rem 1.1rem; min-height: 3.6rem; gap: 0.8rem; }
+  .folder__tabs  { order: 2; }
+  .folder__body  { order: 3; }
+
+  .folder__cover-name { opacity: 1; font-size: 1rem; }
+  .folder__cat-label { display: none; }
+
+  /* Without this strip there is no way to reach anyone but the first member.
+     Shown only while the folder is open, and swipeable. */
+  .folder__tabs { display: none; }
+  .folder.is-open .folder__tabs {
+    display: flex;
+    position: static;
+    max-width: none;
+    gap: 6px;
+    padding: 0 1.1rem 0.9rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .folder.is-open .folder__tabs::-webkit-scrollbar { display: none; }
+  .folder__tab {
+    font-size: 1.12rem;
+    line-height: 1.3;
+    padding: 0.4em 1em 0.45em;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    opacity: 0.72;
+    min-height: 38px;
+  }
+  .folder__tab.is-active {
+    opacity: 1;
+    font-weight: 500;
+    background: rgba(0, 0, 0, 0.26);
+  }
+
+  .folder__blurb { font-size: 0.72rem; }
+
+  .file { padding: 0 0.45rem 0.45rem; }
+  .file__name { font-size: 2.3rem; margin: 0.1rem 0.85rem 0.8rem; }
+
+  .sheet { grid-template-columns: 1fr; padding: 1.5rem 1.2rem; gap: 1.4rem; }
+  .sheet::before { display: none; }
+  .sheet__photo { max-width: 8.5rem; }
+  .sheet__desc { font-size: 1.15rem; }
+  .sheet__quote { font-size: 1.3rem; padding-left: 0.9rem; }
+  .record { margin-top: 1.2rem; font-size: 0.9rem; }
+  .sheet__status { margin-bottom: 0.9rem; }
+
+  .pay { margin-top: 1.4rem; padding: 1.1rem 1.2rem; }
+  .pay__price { font-size: 2.1rem; }
+
+  .scrapbook { padding: 0.6rem 0.8rem 1.2rem; }
+  .scrap { width: 100%; margin-bottom: 0.9rem; }
+
+  .file__nav {
+    flex-wrap: wrap;
+    gap: 0.6rem 1rem;
+    margin: 1.2rem 0.85rem 0.4rem;
+    font-size: 0.72rem;
+  }
+
+  .gallery-page { padding: 0 0 2rem; }
+  .gallery-grid,
+  .gallery-page .gallery-grid { columns: 2 8rem; column-gap: 0.7rem; padding: 0 0.6rem 1.6rem; }
+  .gallery-grid figure { margin-bottom: 0.7rem; padding: 6px 6px 20px; }
+  .gallery-add { padding: 0 1.1rem 1.6rem; }
+
+  .lightbox { padding: 3vh 3vw; }
+  .lightbox__nav { width: 2.6rem; height: 2.6rem; font-size: 1.4rem; }
+  .lightbox__nav--prev { left: 0.3rem; }
+  .lightbox__nav--next { right: 0.3rem; }
+  .lightbox__close { top: 0.7rem; right: 0.9rem; }
+
+  .share-file { padding: 0; }
+  .share-banner { font-size: 0.66rem; gap: 0.5rem; }
+
+  .site-footer { margin-top: 4.5rem; }
+}
+
+@media (max-width: 620px) {
+  :root { --header-h: 66px; }          /* room for proper touch targets */
+
+  .hero { padding-top: calc(var(--header-h) + 1.2rem); min-height: 52vh; }
+  .hero--sub { min-height: 38vh; }
+  .hero__desc { font-size: 1.02rem; margin-top: 1.3rem; }
+  .hero__meta { margin-top: 1.6rem; font-size: 0.66rem; letter-spacing: 0.1em; }
+  .hero__cue { margin-top: 1.8rem; font-size: 0.62rem; }
+
+  /* Header: solid, taller and a bigger wordmark so it holds the top of the
+     screen instead of floating. Pills give a real tap target and make the
+     current section obvious, which small underlined text did not. */
+  .site-header {
+    background: var(--bg);
+    border-bottom: 1px solid rgba(253, 250, 247, 0.22);
+    box-shadow: 0 10px 30px -22px rgba(0, 0, 0, 0.9);
+  }
+  .site-header__inner { justify-content: space-between; gap: 0.5rem; }
+  .wordmark {
+    position: static;
+    left: auto;
+    transform: none;
+    font-size: 1.02rem;
+    letter-spacing: 0.06em;
+  }
+  .site-header__file { display: none; }
+  body.show-subhead .wordmark { opacity: 1; }
+
+  .site-nav { margin-left: 0; gap: 5px; font-size: 0.66rem; }
+  .site-nav a {
+    opacity: 1;
+    display: flex;
+    align-items: center;
+    /* 38px so it is actually thumb-sized, not just visually pill-shaped */
+    min-height: 38px;
+    padding: 0 0.85em;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--muted);
+    line-height: 1;
+    transition: color 0.2s var(--ease), background 0.2s var(--ease),
+                border-color 0.2s var(--ease);
+  }
+  .site-nav a.is-current {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--bg);
+    text-decoration: none;
+  }
+
+  /* three items side by side never balanced at this width */
+  .site-footer {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.5rem;
+    margin-top: 4rem;
+    letter-spacing: 0.1em;
+  }
+}
+
+@media (max-width: 400px) {
+  .hero__title { font-size: 2.7rem; }
+  /* the wordmark stays readable here — shrinking it was what made the
+     header feel like an afterthought on a phone */
+  .wordmark { font-size: 0.92rem; letter-spacing: 0.04em; }
+  .site-nav { gap: 4px; font-size: 0.62rem; }
+  .site-nav a { padding: 0 0.72em; min-height: 36px; }
+  .folder__names { font-size: 1rem; }
+  .file__name { font-size: 2rem; }
+  .site-footer {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.45rem;
+    margin-top: 3.5rem;
+  }
+  .gallery-grid,
+  .gallery-page .gallery-grid { columns: 2 6rem; }
+}
