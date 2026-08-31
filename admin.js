@@ -193,16 +193,44 @@
     } catch {
       hasServer = false;
       connChip("dead");
-      const box = banner("noserver");
-      box.innerHTML = `<b>Read-only — this page cannot save.</b> It is being served by
-        something that is not <code>server.py</code>, so there is no place to write to.
-        Anything you change here will be lost.
-        <br><br>
-        From the greygoose folder, stop the current server and run:
-        <br><code>python3 server.py</code><br>
-        then open <code>http://127.0.0.1:8777/admin.html</code>.`;
+      banner("noserver").innerHTML = whyNoServer();
     }
   })();
+
+  /* The old message always said "run server.py", which is wrong advice when
+     the page is opened from disk or from the published copy. Work out which
+     of the three it actually is. */
+  function whyNoServer() {
+    const host = location.hostname;
+    const onDisk = location.protocol === "file:";
+    const local = ["localhost", "127.0.0.1", "::1", "[::1]", ""].includes(host);
+
+    if (onDisk) {
+      return `<b>Opened straight from disk.</b> This page is at
+        <code>${esc(location.href.split("?")[0])}</code>, so it has no server to save to
+        — double-clicking the file cannot work.
+        <br><br>
+        From the greygoose folder run:<br><code>python3 server.py</code><br>
+        then open <code>http://127.0.0.1:8777/admin.html</code>.`;
+    }
+    if (!local) {
+      return `<b>This is the published copy, not your editor.</b> You are on
+        <code>${esc(host)}</code>, which only serves files — it cannot run
+        <code>server.py</code>, so nothing here can be saved.
+        <br><br>
+        Edit on your own machine instead: run <code>python3 server.py</code> in the
+        greygoose folder, open <code>http://127.0.0.1:8777/admin.html</code>, make your
+        changes, then commit and push <code>data.json</code> to update this copy.`;
+    }
+    return `<b>Nothing was saved.</b> This page is not talking to
+      <code>server.py</code> — your changes are still only in this browser tab,
+      and the website will not show them.
+      <br><br>
+      Saving needs <code>server.py</code>, not <code>python3 -m http.server</code>.
+      Stop whatever is serving this folder, then from the greygoose folder run:
+      <br><code>python3 server.py</code><br>
+      reload this page and make the change again.`;
+  }
 
   function connChip(state) {
     let chip = $("#conn");
@@ -313,15 +341,7 @@
       ? `<b>Not saved — the server is locked.</b> It is running with
          <code>--gate</code>. Open <a href="index.html" target="_blank">the site</a>,
          answer a question, come back and press Save again.`
-      : `<b>Nothing was saved.</b> This page is not talking to
-         <code>server.py</code> — your changes are still only in this browser tab,
-         and the website will not show them.
-         <br><br>
-         Saving needs <code>server.py</code>, not <code>python3 -m http.server</code>.
-         Stop whatever is serving this folder, then from the greygoose folder run:
-         <br><code>python3 server.py</code><br>
-         reload this page and make the change again.
-         <br><br><i>(${esc(err.message)})</i>`;
+      : whyNoServer() + `<br><br><i>(${esc(err.message)})</i>`;
 
     if (!locked) {
       const dl = el("button", "btn btn--sm", "Download data.json instead");

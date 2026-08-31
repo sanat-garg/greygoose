@@ -31,7 +31,9 @@ import json
 import os
 import re
 import shutil
+import socket
 import sys
+import threading
 import time
 import unicodedata
 from http.cookies import SimpleCookie
@@ -424,6 +426,23 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_json({"ok": True})
 
 
+class Server(ThreadingHTTPServer):
+    daemon_threads = True
+    allow_reuse_address = True
+
+
+def serve_on(host, port, extra=""):
+    """Bind one address and hand back a started server, or None."""
+    fam = socket.AF_INET6 if ":" in host else socket.AF_INET
+    try:
+        Server.address_family = fam
+        srv = Server((host, port), Handler)
+    except OSError as exc:
+        return None, exc
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    return srv, None
+
+
 def main():
     global GATE
     args = sys.argv[1:]
@@ -437,13 +456,30 @@ def main():
         print("refusing to listen on %s without --gate" % host)
         sys.exit(1)
 
-    server = ThreadingHTTPServer((host, port), Handler)
-    print("greygoose  →  http://%s:%d" % (host, port))
-    print("admin      →  http://%s:%d/admin.html" % (host, port))
+    # macOS resolves "localhost" to ::1 before 127.0.0.1, so binding IPv4 only
+    # meant http://localhost:PORT could fail while http://127.0.0.1:PORT worked.
+    # Listen on both loopback addresses.
+    bound = []
+    srv, err = serve_on(host, port)
+    if srv:
+        bound.append(host)
+    else:
+        print("could not bind %s:%d — %s" % (host, port, err))
+        sys.exit(1)
+
+    if host == "127.0.0.1":
+        srv6, _ = serve_on("::1", port)
+        if srv6:
+            bound.append("::1")
+
+    print("greygoose  →  http://127.0.0.1:%d" % port)
+    print("admin      →  http://127.0.0.1:%d/admin.html" % port)
+    if "::1" in bound:
+        print("             (http://localhost:%d works too)" % port)
     print("gate       →  %s" % ("on" if GATE else "off (local editing)"))
     print("ctrl-c to stop")
     try:
-        server.serve_forever()
+        threading.Event().wait()
     except KeyboardInterrupt:
         print("\nstopped")
 
