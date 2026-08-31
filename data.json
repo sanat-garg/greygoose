@@ -30,19 +30,16 @@
     {
       "id": "gg-01",
       "crew": "founders",
-      "name": "Sanat Garg",
+      "name": "Soham Garg",
       "photo": "photos/m01.svg",
       "record": {
-        "Class of": "2026",
-        "Hometown": "New Delhi, IN",
-        "Lives": "House 12, off-campus",
-        "Studying": "Computer Science",
-        "In greygoose since": "Day one, Fall 2023",
-        "Signature drink": "Black coffee, then whatever",
-        "Party job": "Aux cord and door list",
-        "Undefeated at": "Rank choice arguments",
-        "Most likely to": "Rebuild the whole setup at 1am",
-        "Catchphrase": "Give it five minutes."
+        "Signature drink": "Espresso Sour Greygoose",
+        "Party job": "Make everyone drunk as fuck!",
+        "Undefeated at": "Bowling",
+        "Most likely to": "Bully Adhyan",
+        "Catchphrase": "Pee...",
+        "School": "Bal Bharati, Rohini",
+        "DOB": "31/07/2009"
       },
       "blurb": "Started the group chat that became greygoose. Runs the calendar, the playlist, and the spreadsheet nobody else will admit they check.",
       "photos": [
@@ -51,25 +48,22 @@
         "photos/p11.svg"
       ],
       "socials": {
-        "instagram": "sanat"
+        "instagram": "sohamgee"
       }
     },
     {
       "id": "gg-02",
       "crew": "founders",
-      "name": "Maya Okafor",
+      "name": "Arnav Jindal",
       "photo": "photos/m02.svg",
       "record": {
-        "Class of": "2026",
-        "Hometown": "Houston, TX",
-        "Lives": "House 12, off-campus",
-        "Studying": "Architecture",
-        "In greygoose since": "Day one, Fall 2023",
         "Signature drink": "Gin and grapefruit",
         "Party job": "Lighting, layout, vibe",
         "Undefeated at": "Beer pong, left hand only",
         "Most likely to": "Rearrange your furniture mid-party",
-        "Catchphrase": "It'll look better if we move the couch."
+        "Catchphrase": "It'll look better if we move the couch.",
+        "School": "2026",
+        "DOB": "Houston, TX"
       },
       "blurb": "Turns a room into a venue in twenty minutes. If the party has a floor plan, Maya drew it on the back of a receipt.",
       "photos": [
@@ -86,16 +80,13 @@
       "name": "Diego Salas",
       "photo": "photos/m03.svg",
       "record": {
-        "Class of": "2025",
-        "Hometown": "Miami, FL",
-        "Lives": "Grad housing",
-        "Studying": "Econ, now a first-year analyst",
-        "In greygoose since": "Day one, Fall 2023",
         "Signature drink": "Cafecito, then a beer",
         "Party job": "Budget, snacks, damage control",
         "Undefeated at": "Getting the deposit back",
         "Most likely to": "Have a folding table in his trunk",
-        "Catchphrase": "Who's venmo-ing me?"
+        "Catchphrase": "Who's venmo-ing me?",
+        "School": "2025",
+        "DOB": "Miami, FL"
       },
       "blurb": "Keeps the whole operation solvent. Books the venue, splits the tab, and somehow always finds the cheaper option.",
       "photos": [
@@ -110,16 +101,13 @@
       "name": "Priya Nair",
       "photo": "photos/m04.svg",
       "record": {
-        "Class of": "2026",
-        "Hometown": "Edison, NJ",
-        "Lives": "House 12, off-campus",
-        "Studying": "Film & Media",
-        "In greygoose since": "Spring 2024",
         "Signature drink": "Espresso martini",
         "Party job": "Camera, group photo, aftermovie",
         "Undefeated at": "Getting everyone to look at once",
         "Most likely to": "Post the recap before you're home",
-        "Catchphrase": "One more, someone blinked."
+        "Catchphrase": "One more, someone blinked.",
+        "School": "2026",
+        "DOB": "Edison, NJ"
       },
       "blurb": "The reason there is any proof these nights happened. Shoots on a point-and-shoot from 2004 and cuts the recap by breakfast.",
       "photos": [
@@ -137,16 +125,13 @@
       "name": "Tom Becker",
       "photo": "photos/m05.svg",
       "record": {
-        "Class of": "2027",
-        "Hometown": "Milwaukee, WI",
-        "Lives": "South Hall",
-        "Studying": "Mechanical Engineering",
-        "In greygoose since": "Spring 2024",
         "Signature drink": "Whatever's in the fridge",
         "Party job": "Ice, cups, cleanup crew",
         "Undefeated at": "Remembering where everything goes",
         "Most likely to": "Be doing dishes at 3am",
-        "Catchphrase": "I got it, I got it."
+        "Catchphrase": "I got it, I got it.",
+        "School": "2027",
+        "DOB": "Milwaukee, WI"
       },
       "blurb": "The one who makes it look easy the next morning. First on the cleanup, never asked twice.",
       "photos": [
@@ -161,16 +146,13 @@
       "name": "Kai Zhou",
       "photo": "photos/m06.svg",
       "record": {
-        "Class of": "2026",
-        "Hometown": "Vancouver, CA",
-        "Lives": "\"Around\"",
-        "Studying": "Music Technology",
-        "In greygoose since": "Fall 2024",
         "Signature drink": "Red Bull, concerningly",
         "Party job": "DJ after 1am",
         "Undefeated at": "Reading a room",
         "Most likely to": "Vanish at 11, reappear with a better speaker",
-        "Catchphrase": "last one, i promise"
+        "Catchphrase": "last one, i promise",
+        "School": "2026",
+        "DOB": "Vancouver, CA"
       },
       "blurb": "Shows up half the time and runs the back half of the night when he does. The set nobody planned is usually the best one.",
       "photos": [
@@ -188,16 +170,13 @@
       "name": "Robbie Dunne",
       "photo": "photos/m07.svg",
       "record": {
-        "Class of": "2025",
-        "Hometown": "Boston, MA",
-        "Lives": "Somewhere with a boat, allegedly",
-        "Studying": "Finished. Nobody's sure in what",
-        "In greygoose since": "Fall 2024",
         "Signature drink": "Guinness, room temp",
         "Party job": "Stories, dares, questionable plans",
         "Undefeated at": "Convincing the group to leave",
         "Most likely to": "Turn a Tuesday into a road trip",
-        "Catchphrase": "hear me out"
+        "Catchphrase": "hear me out",
+        "School": "2025",
+        "DOB": "Boston, MA"
       },
       "blurb": "The reason for at least three group legends. Attendance optional, chaos included.",
       "photos": [
@@ -229,7 +208,7 @@
       "share": "RQbtPaCINGbC",
       "payment": {
         "enabled": true,
-        "price": "400",
+        "price": "40000",
         "currency": "INR",
         "note": "Covers the bar, the sound and the roof.",
         "link": ""
@@ -333,8 +312,8 @@
   ],
   "access": {
     "enabled": true,
-    "title": "Who's asking?",
-    "intro": "This drawer is not public. Answer one thing only the group would know.",
+    "title": "Answer this",
+    "intro": "This web-page is not public. Answer one thing only the group would know. One word only.",
     "questions": [
       {
         "id": "q1",
@@ -342,20 +321,64 @@
         "hash": "sha256:e81dfe69841ad2f7b5790b63e998f0febaf3b29acd732881975130761b98e2c7"
       },
       {
-        "id": "q2",
-        "question": "Who is the king of DC?",
+        "id": "qmtgz8cwn1ztc",
+        "question": "who is the kind of dc?",
         "hash": "sha256:24e2ba9fccb97e772be6578c125785b09bc22f18b75abb593335cf1607869cc2"
       },
       {
-        "id": "q5",
-        "question": "Who always has a folding table in their trunk?",
-        "hash": "sha256:00e48a815525529ba9d33f8761a167588fe00c47bc82f515cf791c482ed99ecc"
+        "id": "qmtgz8nj3gvkg",
+        "question": "who is the sister of arnav?",
+        "hash": "sha256:269c46a11954154246139192bc2b5732c45148e12a7a40ca8aa8d0b09b0e61ca"
       },
       {
-        "id": "q6",
-        "question": "What drink will Noah absolutely not budge on?",
-        "hash": "sha256:7e63a7968d5225a71a61f10d44efc8f920f34e821170640e936c1c5e855888ac"
+        "id": "qmtgz8whs5l9b",
+        "question": "who is queen?",
+        "hash": "sha256:30168c6f5e9ebd3b8c8a22e79d32724c85cc42be3270ec028bb0cd32e0e9f50c"
       }
     ]
+  },
+  "fields": {
+    "members": [
+      "School",
+      "DOB",
+      "Party job",
+      "Undefeated at",
+      "Most likely to",
+      "Catchphrase"
+    ],
+    "parties": [
+      "Date",
+      "Theme",
+      "Where",
+      "Headcount",
+      "Soundtrack",
+      "House rule",
+      "Damage report",
+      "MVP"
+    ]
+  },
+  "submissions": [],
+  "joinForm": {
+    "title": "YOUR FILE",
+    "intro": "Fill this in and you get your own file in the archive. Skip anything you would rather not answer — blanks simply do not show up.",
+    "doneTitle": "Got it",
+    "doneText": "Your file is with the group now. It shows up once someone waves it through.",
+    "askPhoto": true,
+    "askInstagram": true,
+    "askCrew": true,
+    "ask": [
+      "Class of",
+      "Hometown",
+      "Lives",
+      "Studying",
+      "In greygoose since",
+      "Signature drink",
+      "Party job",
+      "Undefeated at",
+      "Most likely to",
+      "Catchphrase",
+      "Hello"
+    ],
+    "hints": {}
   }
 }

@@ -43,10 +43,12 @@ PHOTOS = os.path.join(ROOT, "photos")
 DATA = os.path.join(ROOT, "data.json")
 BACKUPS = os.path.join(ROOT, ".backups")
 SECRET_FILE = os.path.join(ROOT, ".secret")
+ADMIN_FILE = os.path.join(ROOT, ".adminpass")   # salted hash, never committed
 
 MAX_BODY = 25 * 1024 * 1024  # 25 MB per request
 ALLOWED_EXT = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif", ".svg"}
 COOKIE = "gg_access"
+ADMIN_COOKIE = "gg_admin"
 
 GATE = False  # set from the command line
 
@@ -65,6 +67,38 @@ def secret():
 
 def token():
     return hmac.new(secret(), b"greygoose-access-v1", hashlib.sha256).hexdigest()
+
+
+# ---- admin password ---------------------------------------------------------
+# Kept in its own dotfile rather than data.json, because data.json is meant to
+# be publishable and this must never be.
+
+def admin_configured():
+    return os.path.exists(ADMIN_FILE)
+
+
+def set_admin_password(pw):
+    salt = os.urandom(16).hex()
+    digest = hashlib.sha256((salt + pw).encode()).hexdigest()
+    with open(ADMIN_FILE, "w") as fh:
+        fh.write(salt + "$" + digest)
+    os.chmod(ADMIN_FILE, 0o600)
+
+
+def check_admin_password(pw):
+    if not admin_configured():
+        return False
+    with open(ADMIN_FILE) as fh:
+        salt, _, digest = fh.read().strip().partition("$")
+    return hmac.compare_digest(
+        digest, hashlib.sha256((salt + pw).encode()).hexdigest()
+    )
+
+
+def admin_token():
+    """Bound to the stored password, so changing it logs everyone out."""
+    with open(ADMIN_FILE, "rb") as fh:
+        return hmac.new(secret(), b"admin:" + fh.read(), hashlib.sha256).hexdigest()
 
 
 def normalise(s):
@@ -135,6 +169,20 @@ class Handler(SimpleHTTPRequestHandler):
         got = jar.get(COOKIE)
         return bool(got) and hmac.compare_digest(got.value, token())
 
+    def is_admin(self):
+        if not admin_configured():
+            return True          # nothing set yet, so nothing to enforce
+        raw = self.headers.get("Cookie")
+        if not raw:
+            return False
+        jar = SimpleCookie()
+        jar.load(raw)
+        got = jar.get(ADMIN_COOKIE)
+        return bool(got) and hmac.compare_digest(got.value, admin_token())
+
+    def deny_admin(self):
+        self.send_json({"ok": False, "error": "admin"}, 401)
+
     def deny(self):
         self.send_json({"ok": False, "error": "locked"}, 403)
 
@@ -150,6 +198,11 @@ class Handler(SimpleHTTPRequestHandler):
             if path == "/api/ping":
                 # admin.js uses this to tell you up front whether saving works
                 return self.send_json({"ok": True, "gate": GATE})
+            if path == "/api/admin-status":
+                return self.send_json({
+                    "configured": admin_configured(),
+                    "authed": self.is_admin(),
+                })
             if path == "/api/questions":
                 return self.api_questions()
             if path == "/api/party":
@@ -199,9 +252,17 @@ class Handler(SimpleHTTPRequestHandler):
         try:
             if self.path == "/api/unlock":
                 return self.api_unlock()
+            if self.path == "/api/submit":
+                return self.api_submit()
+            if self.path == "/api/admin-login":
+                return self.api_admin_login()
+            if self.path == "/api/admin-password":
+                return self.api_admin_password()
             if self.path in ("/api/save", "/api/upload", "/api/delete"):
                 if not self.unlocked():
                     return self.deny()
+                if not self.is_admin():
+                    return self.deny_admin()
                 return {
                     "/api/save": self.api_save,
                     "/api/upload": self.api_upload,
@@ -218,6 +279,8 @@ class Handler(SimpleHTTPRequestHandler):
         time.sleep(0.25)  # take the shine off brute forcing
 
         for q in (load_data().get("access") or {}).get("questions", []):
+            if not q.get("hash"):
+                continue                      # incomplete: nothing can match it
             if q.get("id") == wanted:
                 if hmac.compare_digest(str(q.get("hash", "")), answer_hash(given)):
                     cookie = (
@@ -228,24 +291,101 @@ class Handler(SimpleHTTPRequestHandler):
                 break
         self.send_json({"ok": False, "error": "wrong answer"}, 401)
 
-    def api_save(self):
-        data = self.read_json()
-        for key in ("crews", "members", "parties", "gallery"):
-            if key not in data:
-                raise ValueError("missing key: " + key)
+    def api_submit(self):
+        """A friend filling in join.html. Deliberately unauthenticated, so it is
+        written to a waiting list rather than straight into members."""
+        p = self.read_json()
+        name = (p.get("name") or "").strip()[:80]
+        if not name:
+            raise ValueError("a name is required")
 
+        record = {}
+        for k, v in (p.get("record") or {}).items():
+            k = str(k).strip()[:60]
+            v = str(v).strip()[:300]
+            if k and v:
+                record[k] = v
+
+        entry = {
+            "id": "sub-" + os.urandom(5).hex(),
+            "at": time.strftime("%Y-%m-%d %H:%M"),
+            "name": name,
+            "crew": str(p.get("crew") or "")[:40],
+            "blurb": (p.get("blurb") or "").strip()[:600],
+            "instagram": re.sub(r"[^A-Za-z0-9._]", "", (p.get("instagram") or ""))[:40],
+            "record": record,
+            "photo": "",
+        }
+
+        blob = p.get("photoData") or ""
+        if blob.startswith("data:") and "," in blob:
+            fname = safe_name(p.get("photoName") or "photo.jpg")
+            if fname:
+                raw = base64.b64decode(blob.split(",", 1)[1])
+                if len(raw) <= MAX_BODY:
+                    os.makedirs(PHOTOS, exist_ok=True)
+                    stem, ext = os.path.splitext(fname)
+                    final, n = "join-" + stem + ext, 2
+                    while os.path.exists(os.path.join(PHOTOS, final)):
+                        final = "join-%s-%d%s" % (stem, n, ext); n += 1
+                    with open(os.path.join(PHOTOS, final), "wb") as fh:
+                        fh.write(raw)
+                    entry["photo"] = "photos/" + final
+
+        data = load_data()
+        subs = data.setdefault("submissions", [])
+        if len(subs) >= 200:
+            raise ValueError("the waiting list is full")
+        subs.append(entry)
+        self.write_data(data)
+        self.send_json({"ok": True})
+
+    def api_admin_login(self):
+        pw = (self.read_json().get("password") or "")
+        time.sleep(0.3)                       # slow down guessing
+        if not admin_configured():
+            return self.send_json({"ok": False, "error": "not configured"}, 400)
+        if not check_admin_password(pw):
+            return self.send_json({"ok": False, "error": "wrong password"}, 401)
+        cookie = ("%s=%s; Path=/; Max-Age=%d; HttpOnly; SameSite=Lax"
+                  % (ADMIN_COOKIE, admin_token(), 60 * 60 * 12))
+        self.send_json({"ok": True}, cookie=cookie)
+
+    def api_admin_password(self):
+        """Set it the first time, or change it when already signed in."""
+        payload = self.read_json()
+        new = (payload.get("new") or "").strip()
+        if len(new) < 6:
+            raise ValueError("use at least 6 characters")
+        if admin_configured() and not check_admin_password(payload.get("current") or ""):
+            return self.send_json({"ok": False, "error": "current password is wrong"}, 401)
+        set_admin_password(new)
+        cookie = ("%s=%s; Path=/; Max-Age=%d; HttpOnly; SameSite=Lax"
+                  % (ADMIN_COOKIE, admin_token(), 60 * 60 * 12))
+        self.send_json({"ok": True}, cookie=cookie)
+
+    def write_data(self, data):
         os.makedirs(BACKUPS, exist_ok=True)
         if os.path.exists(DATA):
             stamp = time.strftime("%Y%m%d-%H%M%S")
             shutil.copy2(DATA, os.path.join(BACKUPS, "data-%s.json" % stamp))
             for old in sorted(os.listdir(BACKUPS))[:-20]:
                 os.remove(os.path.join(BACKUPS, old))
-
         tmp = DATA + ".tmp"
         with open(tmp, "w", encoding="utf-8") as fh:
             json.dump(data, fh, indent=2, ensure_ascii=False)
             fh.write("\n")
         os.replace(tmp, DATA)
+
+    def api_save(self):
+        data = self.read_json()
+        for key in ("crews", "members", "parties", "gallery"):
+            if key not in data:
+                raise ValueError("missing key: " + key)
+        # never let the editor's copy clobber submissions that arrived meanwhile
+        data["submissions"] = load_data().get("submissions", []) \
+            if data.get("submissions") is None else data["submissions"]
+        self.write_data(data)
         self.send_json({"ok": True})
 
     def api_upload(self):

@@ -32,6 +32,10 @@
 
   let data = null;
   let dirty = false;
+  /* question id -> the answer hash as it currently exists on disk. Clearing an
+     answer box restores from this, so it can never resurrect a stale hash or
+     silently drop the one you just typed. */
+  let savedHashes = {};
   let hasServer = true;
   let selMember = 0;
   let selParty = 0;
@@ -53,8 +57,97 @@
     if (dirty) { e.preventDefault(); e.returnValue = ""; }
   });
 
+  /* ---------- admin lock ------------------------------------------------------
+     The editor is what actually changes the site, so it gets its own password,
+     stored server-side in .adminpass and never in data.json. */
+
+  const lock = $("#lock");
+  let lockMode = "login";     // "login" | "setup" | "change"
+
+  function showLock(mode, title, intro, btn) {
+    lockMode = mode;
+    $("#lock-title").textContent = title;
+    $("#lock-intro").textContent = intro;
+    $("#lock-go").textContent = btn;
+    $("#lock-pw").value = "";
+    $("#lock-pw2").value = "";
+    $("#lock-pw2").hidden = mode === "login";
+    $("#lock-pw").placeholder =
+      mode === "change" ? "current password" : mode === "setup" ? "new password" : "admin password";
+    $("#lock-pw").autocomplete = mode === "login" ? "current-password" : "new-password";
+    $("#lock-msg").textContent = "";
+    lock.hidden = false;
+    document.body.classList.add("is-locked");
+    setTimeout(() => $("#lock-pw").focus(), 50);
+  }
+  function hideLock() {
+    lock.hidden = true;
+    document.body.classList.remove("is-locked");
+  }
+  function lockError(msg) {
+    $("#lock-msg").textContent = msg;
+    const box = $(".lock__box");
+    box.classList.remove("is-wrong");
+    void box.offsetWidth;
+    box.classList.add("is-wrong");
+  }
+
+  $("#lock-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const pw = $("#lock-pw").value;
+    const pw2 = $("#lock-pw2").value;
+    try {
+      if (lockMode === "login") {
+        const r = await fetch("api/admin-login", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: pw }),
+        });
+        const out = await r.json();
+        if (!out.ok) return lockError(out.error || "wrong password");
+        hideLock();
+        boot();
+        return;
+      }
+      const body = lockMode === "change"
+        ? { current: pw, new: pw2 }
+        : { new: pw };
+      if (lockMode === "setup" && pw !== pw2) return lockError("the two entries do not match");
+      const r = await fetch("api/admin-password", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const out = await r.json();
+      if (!out.ok) return lockError(out.error || "could not set the password");
+      hideLock();
+      if (lockMode === "change") setStatus("admin password changed ✓", "is-ok");
+      else boot();
+    } catch (err) {
+      lockError("could not reach server.py");
+    }
+  });
+
+  (async function guard() {
+    let st;
+    try {
+      st = await (await fetch("api/admin-status", { cache: "no-store" })).json();
+    } catch {
+      boot();                       /* no server: the read-only banner covers it */
+      return;
+    }
+    if (!st.configured) {
+      showLock("setup", "Set a password",
+        "Nobody has set one yet. Pick a password for this editor — it is stored on your machine, never in data.json.",
+        "Set password");
+    } else if (!st.authed) {
+      showLock("login", "Locked", "Enter the admin password to edit the site.", "Unlock");
+    } else {
+      boot();
+    }
+  })();
+
   /* ---------- load / save --------------------------------------------------- */
 
+  function boot() {
   fetch("data.json", { cache: "no-store" })
     .then((r) => {
       if (!r.ok) throw new Error("HTTP " + r.status);
@@ -67,10 +160,13 @@
       data.parties = data.parties || [];
       data.gallery = data.gallery || [];
       data.fields = data.fields || {};
-      data.fields.members = data.fields.members || [];
-      data.fields.parties = data.fields.parties || [];
+      data.fields.members = healFields(data.fields.members, data.members);
+      data.fields.parties = healFields(data.fields.parties, data.parties);
       data.access = data.access || { enabled: false, title: "", intro: "", questions: [] };
       data.access.questions = data.access.questions || [];
+      data.submissions = data.submissions || [];
+      data.joinForm = Object.assign(defaultJoinForm(), data.joinForm || {});
+      snapshotAnswers();
       setStatus("loaded");
       renderAll();
     })
@@ -82,6 +178,7 @@
            Open <a href="index.html">the site</a>, answer a question, then reload this page.</p>`
         : `<p class="empty">Start the server first:<br><code>python3 server.py</code><br><br>${esc(err.message)}</p>`;
     });
+  }
 
   saveBtn.addEventListener("click", save);
 
@@ -122,6 +219,26 @@
   }
 
   async function save() {
+    /* A question with no text or no answer can never be answered — if the gate
+       picks it, the visitor is locked out. Catch it before it reaches disk. */
+    const incomplete = (data.access.questions || []).filter(
+      (q) => !(q.question || "").trim() || !q.hash
+    );
+    if (incomplete.length) {
+      const go = confirm(
+        incomplete.length + " question" + (incomplete.length > 1 ? "s are" : " is") +
+        " missing text or an answer.\n\nNobody can ever answer " +
+        (incomplete.length > 1 ? "them" : "it") + ", and anyone who gets asked would be " +
+        "locked out.\n\nOK to drop " + (incomplete.length > 1 ? "them" : "it") +
+        " and save, or Cancel to go back and finish."
+      );
+      if (!go) { setStatus("not saved — finish the questions", "is-err"); return; }
+      data.access.questions = data.access.questions.filter(
+        (q) => (q.question || "").trim() && q.hash
+      );
+      renderAccess();
+    }
+
     saveBtn.disabled = true;
     setStatus("saving…");
     banner("");
@@ -131,12 +248,18 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
+      if (res.status === 401) {
+        showLock("login", "Session expired", "Sign in again to save your changes.", "Unlock");
+        throw new Error("admin");
+      }
       if (res.status === 403) throw new Error("locked");
       if (!res.ok) throw new Error("HTTP " + res.status);
       const out = await res.json();
       if (!out.ok) throw new Error(out.error || "save failed");
       dirty = false;
       hasServer = true;
+      snapshotAnswers();      /* what is on disk just changed */
+      refreshAnswerRows();
       setStatus("saved ✓", "is-ok");
     } catch (err) {
       hasServer = false;
@@ -144,6 +267,41 @@
       setStatus("NOT saved", "is-err");
       failedSave(err);
     }
+  }
+
+  /* If the shared field list is empty while the records are full, the schema
+     was lost — every field would show as "just this person" and renaming would
+     stop propagating. Rebuild it from the keys the records actually use. */
+  function healFields(current, items) {
+    if (current && current.length) return current;
+    const order = [], seen = new Set(), counts = {};
+    (items || []).forEach((it) => {
+      Object.keys(it.record || {}).forEach((k) => {
+        counts[k] = (counts[k] || 0) + 1;
+        if (!seen.has(k)) { seen.add(k); order.push(k); }
+      });
+    });
+    const need = Math.max(1, Math.floor((items || []).length / 2));
+    return order.filter((k) => counts[k] >= need);
+  }
+
+  function snapshotAnswers() {
+    savedHashes = {};
+    (data.access.questions || []).forEach((q) => { savedHashes[q.id] = q.hash || ""; });
+  }
+
+  /* after a save every row's "answer saved" state may have changed */
+  function refreshAnswerRows() {
+    $$("#q-list .q-row").forEach((row) => {
+      const ai = row.querySelectorAll("input")[1];
+      const note = row.querySelector(".q-note");
+      const id = row.dataset.qid;
+      const saved = savedHashes[id];
+      ai.value = "";
+      ai.placeholder = saved ? "answer saved — type to change it" : "the answer";
+      note.textContent = saved ? "answer saved" : "no answer set";
+      note.className = "q-note" + (saved ? "" : " is-err");
+    });
   }
 
   /* A failed save used to quietly download a file, which looked like the save
@@ -210,6 +368,9 @@
     renderGallery();
     renderCrews();
     renderAccess();
+    renderRequests();
+    renderFields();
+    renderJoinForm();
   }
 
   /* ---------- shared bits --------------------------------------------------- */
@@ -250,14 +411,14 @@
     const rec = record || {};
     const std = () => (data.fields[kind] = data.fields[kind] || []);
 
-    const commit = () => {
-      const out = {};
+    /* Copy what is typed into the record itself, in place. Replacing the
+       object would leave this editor holding a different one than the member. */
+    const syncValues = () => {
       $$(".rec-row", box).forEach((row) => {
-        const label = row.dataset.label.trim();
-        if (label) out[label] = $(".rec-val", row).value;
+        const label = (row.dataset.label || "").trim();
+        if (label) rec[label] = $(".rec-val", row).value;
       });
-      onChange(out);
-      markDirty();
+      onChange(rec);
     };
 
     const draw = () => {
@@ -284,29 +445,36 @@
       name.addEventListener("change", () => {
         const next = name.value.trim();
         if (!next || next === label) { name.value = label; return; }
-        if (isStandard) {
-          const list = std();
-          list[list.indexOf(label)] = next;
-          /* renaming a shared field renames it on everyone who filled it in */
-          collection(kind).forEach((item) => {
-            if (item.record && label in item.record) {
-              item.record[next] = item.record[label];
-              delete item.record[label];
-            }
-          });
-        } else {
-          rec[next] = rec[label];
-          delete rec[label];
-        }
-        markDirty();
-        redraw();
+        const clash = std().includes(next) || (!isStandard && next in rec);
+        if (clash) { alert('"' + next + '" already exists.'); name.value = label; return; }
+        restructure(() => {
+          if (isStandard) {
+            const list = std();
+            const at = list.indexOf(label);
+            if (at > -1) list[at] = next; else list.push(next);
+            /* a shared field renames on everyone who filled it in */
+            collection(kind).forEach((item) => {
+              if (item.record && label in item.record) {
+                item.record[next] = item.record[label];
+                delete item.record[label];
+              }
+            });
+          } else {
+            rec[next] = rec[label];
+            delete rec[label];
+          }
+        });
       });
 
       const val = el("input", "rec-val");
       val.type = "text";
       val.value = rec[label] || "";
       val.placeholder = isStandard ? "—" : "Value";
-      val.addEventListener("input", commit);
+      val.addEventListener("input", () => {
+        rec[label] = val.value;
+        onChange(rec);
+        markDirty();
+      });
 
       const chip = el("button", "scope " + (isStandard ? "is-all" : "is-one"),
         isStandard ? "Everyone" : "Just " + whoLabel);
@@ -314,13 +482,19 @@
       chip.title = isStandard
         ? "Shown on everyone. Click to make it only this one."
         : "Only on this one. Click to give it to everyone.";
-      chip.addEventListener("click", () => {
+      chip.addEventListener("click", () => restructure(() => {
         const list = std();
-        if (isStandard) list.splice(list.indexOf(label), 1);
-        else list.push(label);
-        markDirty();
-        redraw();
-      });
+        const at = list.indexOf(label);
+        if (isStandard) {
+          if (at > -1) list.splice(at, 1);       /* -1 would splice off the tail */
+        } else if (at === -1) {
+          list.push(label);
+          /* everyone gets the box; only this person keeps a value in it */
+          collection(kind).forEach((i) => {
+            if (i.record && !(label in i.record)) i.record[label] = "";
+          });
+        }
+      }));
 
       const del = el("button", "rec-del", "✕");
       del.type = "button";
@@ -334,32 +508,28 @@
             `Remove "${label}" from every ${kind === "members" ? "member" : "party"}?` +
             (used ? `\n\n${used} of them have something written in it — that text is deleted too.` : "")
           )) return;
-          const list = std();
-          list.splice(list.indexOf(label), 1);
-          collection(kind).forEach((i) => { if (i.record) delete i.record[label]; });
+          restructure(() => {
+            const list = std();
+            const at = list.indexOf(label);
+            if (at > -1) list.splice(at, 1);
+            collection(kind).forEach((i) => { if (i.record) delete i.record[label]; });
+          });
         } else {
-          delete rec[label];
+          restructure(() => { delete rec[label]; });
         }
-        markDirty();
-        redraw();
       });
 
       row.append(name, val, chip, del);
       box.appendChild(row);
     }
 
-    const redraw = () => {
-      draw();
-      onChange(collect());
+    /* Structural edits must read the DOM BEFORE they change anything — doing it
+       afterwards re-added keys that had just been renamed away. */
+    const restructure = (mutate) => {
+      syncValues();
+      mutate();
+      markDirty();
       if (kind === "members") renderMembers(); else renderParties();
-    };
-    const collect = () => {
-      const out = {};
-      $$(".rec-row", box).forEach((row) => {
-        const l = row.dataset.label.trim();
-        if (l) out[l] = $(".rec-val", row).value;
-      });
-      return out;
     };
 
     draw();
@@ -371,9 +541,12 @@
       if (!label || !label.trim()) return;
       const l = label.trim();
       if (std().includes(l)) { alert(`"${l}" already exists.`); return; }
-      std().push(l);
-      markDirty();
-      redraw();
+      restructure(() => {
+        std().push(l);
+        collection(kind).forEach((i) => {
+          if (i.record && !(l in i.record)) i.record[l] = "";
+        });
+      });
     });
 
     const addOne = el("button", "btn btn--sm", "+ Field just for " + whoLabel);
@@ -382,9 +555,7 @@
       if (!label || !label.trim()) return;
       const l = label.trim();
       if (std().includes(l) || l in rec) { alert(`"${l}" already exists.`); return; }
-      rec[l] = "";
-      markDirty();
-      redraw();
+      restructure(() => { rec[l] = ""; });
     });
 
     const bar = el("div", "rec-add");
@@ -877,6 +1048,7 @@
      answers half-typed in the other rows are not wiped out along with it. */
   function questionRow(q) {
     const row = el("div", "q-row");
+    row.dataset.qid = q.id;
 
     const qi = el("input");
     qi.type = "text";
@@ -891,15 +1063,15 @@
     const note = el("div", "q-note", q.hash ? "answer saved" : "no answer set");
     if (!q.hash) note.className = "q-note is-err";
 
-    /* the answer that was on disk, so clearing the box restores it rather
-       than leaving a half-typed hash behind */
-    const original = q.hash || "";
     ai.addEventListener("input", () => {
       const v = ai.value.trim();
       if (!v) {
-        q.hash = original;
-        note.textContent = original ? "answer unchanged" : "no answer set";
-        note.className = "q-note" + (original ? "" : " is-err");
+        /* read the baseline live — a stale copy taken when the row was built
+           would undo an answer that has since been saved */
+        const base = savedHashes[q.id] || "";
+        q.hash = base;
+        note.textContent = base ? "answer unchanged" : "no answer set";
+        note.className = "q-note" + (base ? "" : " is-err");
         markDirty();
         return;
       }
@@ -930,6 +1102,340 @@
     row.append(grid, note);
     return row;
   }
+
+  /* ---------- bulk field editor ------------------------------------------------
+     One place to change the record rows for everyone at once, instead of
+     opening a member and editing the shared list from inside their file. */
+
+  function fieldsOf(kind) {
+    data.fields[kind] = data.fields[kind] || [];
+    return data.fields[kind];
+  }
+
+  function renderFields() {
+    [["members", "#mfield-list", "#mf-count"],
+     ["parties", "#pfield-list", "#pf-count"]].forEach(([kind, listSel, countSel]) => {
+      const list = fieldsOf(kind);
+      const box = $(listSel);
+      box.innerHTML = "";
+      $(countSel).textContent = list.length;
+
+      if (!list.length) {
+        box.appendChild(el("p", "fld-empty",
+          "No shared fields. Add one and every " +
+          (kind === "members" ? "member" : "party") + " gets that box."));
+        return;
+      }
+
+      list.forEach((label, i) => box.appendChild(fieldRow(kind, label, i, list.length)));
+    });
+  }
+
+  function fieldRow(kind, label, i, total) {
+    const items = collection(kind);
+    const used = items.filter((it) => (it.record || {})[label]).length;
+    const row = el("div", "fld-row");
+
+    /* reorder */
+    const move = el("div", "fld-move");
+    const up = el("button", null, "↑");
+    const down = el("button", null, "↓");
+    up.type = down.type = "button";
+    up.title = "Move up"; down.title = "Move down";
+    up.disabled = i === 0;
+    down.disabled = i === total - 1;
+    up.addEventListener("click", () => swapField(kind, i, i - 1));
+    down.addEventListener("click", () => swapField(kind, i, i + 1));
+    move.append(up, down);
+
+    /* rename, for everyone */
+    const name = el("input");
+    name.type = "text";
+    name.value = label;
+    name.addEventListener("change", () => {
+      const next = name.value.trim();
+      if (!next || next === label) { name.value = label; return; }
+      if (fieldsOf(kind).includes(next)) {
+        alert(`"${next}" already exists.`);
+        name.value = label;
+        return;
+      }
+      const list = fieldsOf(kind);
+      list[list.indexOf(label)] = next;
+      items.forEach((it) => {
+        if (it.record && label in it.record) {
+          it.record[next] = it.record[label];
+          delete it.record[label];
+        }
+      });
+      markDirty();
+      afterFieldChange(kind);
+    });
+
+    const usedTag = el("div", "fld-used" + (used ? "" : " is-empty"),
+      used ? `${used}/${items.length} filled` : "blank on all");
+
+    /* the bulk part: one value onto every file */
+    const fill = el("button", "btn btn--sm", "Fill for everyone");
+    fill.type = "button";
+    fill.addEventListener("click", () => {
+      const v = prompt(
+        `Write the same "${label}" onto all ${items.length} ` +
+        (kind === "members" ? "member files" : "parties") +
+        ".\n\nLeave it empty to clear the field on everyone.",
+        ""
+      );
+      if (v === null) return;
+      const val = v.trim();
+      const overwriting = items.filter((it) => (it.record || {})[label]).length;
+      if (overwriting && !confirm(
+        (val ? `Set "${label}" to "${val}"` : `Clear "${label}"`) +
+        ` on all ${items.length}?\n\n${overwriting} already have something written there and will be overwritten.`
+      )) return;
+      items.forEach((it) => { it.record = it.record || {}; it.record[label] = val; });
+      markDirty();
+      afterFieldChange(kind);
+    });
+
+    /* remove, from everyone */
+    const del = el("button", "btn btn--sm btn--danger", "Remove");
+    del.type = "button";
+    del.addEventListener("click", () => {
+      if (!confirm(
+        `Remove "${label}" from every ` + (kind === "members" ? "member" : "party") + "?" +
+        (used ? `\n\n${used} have something written in it — that text goes too.` : "")
+      )) return;
+      const list = fieldsOf(kind);
+      list.splice(list.indexOf(label), 1);
+      items.forEach((it) => { if (it.record) delete it.record[label]; });
+      markDirty();
+      afterFieldChange(kind);
+    });
+
+    row.append(move, name, usedTag, fill, del);
+    return row;
+  }
+
+  function swapField(kind, a, b) {
+    const list = fieldsOf(kind);
+    if (b < 0 || b >= list.length) return;
+    [list[a], list[b]] = [list[b], list[a]];
+    markDirty();
+    afterFieldChange(kind);
+  }
+
+  /* every field change ripples into the record editors and the join form */
+  function afterFieldChange(kind) {
+    renderFields();
+    if (kind === "members") { renderMembers(); renderJoinForm(); }
+    else renderParties();
+  }
+
+  $("#add-mfield").addEventListener("click", () => addField("members"));
+  $("#add-pfield").addEventListener("click", () => addField("parties"));
+
+  function addField(kind) {
+    const label = prompt("Name of the new field — every " +
+      (kind === "members" ? "member" : "party") + " gets this box:");
+    if (!label || !label.trim()) return;
+    const l = label.trim();
+    if (fieldsOf(kind).includes(l)) { alert(`"${l}" already exists.`); return; }
+    fieldsOf(kind).push(l);
+    collection(kind).forEach((it) => {
+      it.record = it.record || {};
+      if (!(l in it.record)) it.record[l] = "";
+    });
+    if (kind === "members") (data.joinForm.ask = data.joinForm.ask || []).push(l);
+    markDirty();
+    afterFieldChange(kind);
+  }
+
+  /* ---------- the join form ----------------------------------------------------
+     What friends see at join.html. The questions are the shared member fields,
+     so whatever they type lands in the right box on their file. */
+
+  function defaultJoinForm() {
+    return {
+      title: "YOUR FILE",
+      intro: "Fill this in and you get your own file in the archive. Skip anything you " +
+             "would rather not answer — blanks simply do not show up.",
+      doneTitle: "Got it",
+      doneText: "Your file is with the group now. It shows up once someone waves it through.",
+      askPhoto: true,
+      askInstagram: true,
+      askCrew: true,
+      ask: ((data && data.fields && data.fields.members) || []).slice(),
+      hints: {},
+    };
+  }
+
+  function renderJoinForm() {
+    const jf = data.joinForm;
+
+    const bind = (sel, key) => {
+      const n = $(sel);
+      n.value = jf[key] || "";
+      n.oninput = () => { jf[key] = n.value; markDirty(); };
+    };
+    bind("#join-title", "title");
+    bind("#join-intro", "intro");
+    bind("#join-done-title", "doneTitle");
+    bind("#join-done-text", "doneText");
+
+    const check = (sel, key) => {
+      const n = $(sel);
+      n.checked = !!jf[key];
+      n.onchange = () => { jf[key] = n.checked; markDirty(); };
+    };
+    check("#join-ask-photo", "askPhoto");
+    check("#join-ask-ig", "askInstagram");
+    check("#join-ask-crew", "askCrew");
+
+    jf.ask = jf.ask || [];
+    jf.hints = jf.hints || {};
+
+    const box = $("#join-ask-list");
+    box.innerHTML = "";
+    const fields = fieldsOf("members");
+    $("#join-ask-count").textContent =
+      fields.filter((f) => jf.ask.includes(f)).length + " of " + fields.length;
+
+    if (!fields.length) {
+      box.appendChild(el("p", "fld-empty",
+        "No member fields yet — add some under Fields and they appear here."));
+      return;
+    }
+
+    fields.forEach((label) => {
+      const on = jf.ask.includes(label);
+      const row = el("div", "ask-row" + (on ? "" : " is-off"));
+
+      const cb = el("input");
+      cb.type = "checkbox";
+      cb.checked = on;
+      cb.addEventListener("change", () => {
+        if (cb.checked) { if (!jf.ask.includes(label)) jf.ask.push(label); }
+        else jf.ask = jf.ask.filter((x) => x !== label);
+        markDirty();
+        renderJoinForm();
+      });
+
+      const hint = el("input", "ask-hint");
+      hint.type = "text";
+      hint.value = jf.hints[label] || "";
+      hint.placeholder = "hint shown in the box — optional";
+      hint.addEventListener("input", () => {
+        if (hint.value.trim()) jf.hints[label] = hint.value;
+        else delete jf.hints[label];
+        markDirty();
+      });
+
+      row.append(cb, el("span", "ask-name", esc(label)), hint);
+      box.appendChild(row);
+    });
+  }
+
+  /* ---------- join requests --------------------------------------------------- */
+
+  function renderRequests() {
+    const box = $("#req-list");
+    const subs = data.submissions || [];
+    box.innerHTML = "";
+    $("#req-count").textContent = subs.length;
+    const badge = $("#req-badge");
+    badge.textContent = subs.length;
+    badge.hidden = !subs.length;
+
+    if (!subs.length) {
+      box.appendChild(el("p", "hint",
+        "Nobody waiting. Send a friend the form link above and their file turns up here."));
+      return;
+    }
+
+    subs.forEach((sub) => {
+      const card = el("div", "req");
+      const head = el("div", "req__head");
+      head.innerHTML =
+        (sub.photo ? `<img src="${esc(sub.photo)}" alt="">` : "") +
+        `<div><div class="req__name">${esc(sub.name)}</div>` +
+        `<div class="req__when">${esc(sub.at || "")}${
+          sub.crew ? " · " + esc((data.crews.find((c) => c.id === sub.crew) || {}).name || sub.crew) : ""
+        }</div></div>`;
+
+      const actions = el("div", "req__actions");
+      const ok = el("button", "btn btn--sm btn--go", "Add to the site");
+      ok.addEventListener("click", () => approve(sub));
+      const no = el("button", "btn btn--sm btn--danger", "Discard");
+      no.addEventListener("click", () => {
+        if (!confirm(`Discard ${sub.name}'s file? This cannot be undone.`)) return;
+        data.submissions = data.submissions.filter((s) => s !== sub);
+        markDirty();
+        renderRequests();
+      });
+      actions.append(ok, no);
+      head.appendChild(actions);
+      card.appendChild(head);
+
+      const grid = el("dl", "req__grid");
+      Object.entries(sub.record || {}).forEach(([k, v]) => {
+        grid.append(el("dt", null, esc(k)), el("dd", null, esc(v)));
+      });
+      if (sub.instagram) grid.append(el("dt", null, "Instagram"), el("dd", null, "@" + esc(sub.instagram)));
+      if (grid.children.length) card.appendChild(grid);
+      if (sub.blurb) card.appendChild(el("p", "req__blurb", esc(sub.blurb)));
+
+      box.appendChild(card);
+    });
+  }
+
+  function approve(sub) {
+    const crew = data.crews.find((c) => c.id === sub.crew) || data.crews[0];
+    const record = {};
+    /* shape it to the shared schema so the new file matches everyone else's */
+    (data.fields.members || []).forEach((label) => {
+      record[label] = (sub.record || {})[label] || "";
+    });
+    Object.entries(sub.record || {}).forEach(([k, v]) => {
+      if (!(k in record)) record[k] = v;
+    });
+
+    data.members.push({
+      id: nextId(data.members, "gg-"),
+      crew: crew ? crew.id : "",
+      name: sub.name,
+      photo: sub.photo || "",
+      record,
+      blurb: sub.blurb || "",
+      photos: sub.photo ? [sub.photo] : [],
+      socials: sub.instagram ? { instagram: sub.instagram } : {},
+    });
+    if (sub.photo && !data.gallery.includes(sub.photo)) data.gallery.push(sub.photo);
+
+    data.submissions = data.submissions.filter((s) => s !== sub);
+    selMember = data.members.length - 1;
+    markDirty();
+    renderRequests();
+    renderMembers();
+    setStatus("added — press Save to publish", "is-dirty");
+  }
+
+  $("#copy-join").addEventListener("click", async (e) => {
+    e.preventDefault();
+    const url = new URL("join.html", location.href).toString();
+    try {
+      await navigator.clipboard.writeText(url);
+      e.target.textContent = "Copied ✓";
+    } catch {
+      prompt("Copy this link:", url);
+    }
+    setTimeout(() => (e.target.textContent = "Copy the form link"), 1800);
+  });
+
+  $("#change-admin-pw").addEventListener("click", () => {
+    showLock("change", "Change password",
+      "Enter the current admin password, then the new one. Everyone signed in elsewhere gets signed out.",
+      "Change it");
+  });
 
   $("#add-question").addEventListener("click", () => {
     const q = {

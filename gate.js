@@ -58,7 +58,15 @@ window.GGGate = (function () {
       const r = await fetch("data.json", { cache: "no-store" });
       if (!r.ok) return null;
       const d = await r.json();
-      return Object.assign({ serverSide: false }, d.access || {});
+      const access = d.access || {};
+      return Object.assign({}, access, {
+        serverSide: false,
+        /* a question with no text or no answer can never be satisfied — showing
+           one locks the visitor out completely */
+        questions: (access.questions || []).filter(
+          (q) => (q.question || "").trim() && q.hash
+        ),
+      });
     } catch {
       return null;
     }

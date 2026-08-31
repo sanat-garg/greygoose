@@ -10,9 +10,24 @@
     href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="admin.css?v=14" />
+  <link rel="stylesheet" href="admin.css?v=23" />
 </head>
 <body>
+  <!-- admin lock -->
+  <div class="lock" id="lock" hidden>
+    <form class="lock__box" id="lock-form">
+      <div class="lock__mark">Greygoose <em>admin</em></div>
+      <h1 class="lock__title" id="lock-title">Locked</h1>
+      <p class="lock__intro" id="lock-intro"></p>
+      <input class="lock__input" id="lock-pw" type="password" autocomplete="current-password"
+             placeholder="admin password" />
+      <input class="lock__input" id="lock-pw2" type="password" autocomplete="new-password"
+             placeholder="repeat it" hidden />
+      <button class="lock__go" type="submit" id="lock-go">Unlock</button>
+      <p class="lock__msg" id="lock-msg" role="status"></p>
+    </form>
+  </div>
+
   <header class="bar">
     <span class="bar__title">Greygoose <em>admin</em></span>
     <nav class="tabs">
@@ -21,6 +36,9 @@
       <button data-tab="gallery">Gallery</button>
       <button data-tab="crews">Crews</button>
       <button data-tab="access">Password</button>
+      <button data-tab="fields">Fields</button>
+      <button data-tab="form">Form</button>
+      <button data-tab="requests">Requests <b class="tab-badge" id="req-badge" hidden>0</b></button>
     </nav>
     <div class="bar__right">
       <span class="status" id="status">loading…</span>
@@ -86,6 +104,104 @@
       </div>
     </section>
 
+    <!-- FIELDS (bulk edit the record rows for everyone) -->
+    <section class="panel" data-panel="fields">
+      <div class="crews-panel">
+        <div class="list__head" style="padding-left:0;padding-right:0">
+          <span>Member fields <b id="mf-count">0</b></span>
+          <button class="btn btn--sm" id="add-mfield">+ Add field</button>
+        </div>
+        <div id="mfield-list"></div>
+
+        <div class="list__head" style="padding-left:0;padding-right:0;margin-top:34px">
+          <span>Party fields <b id="pf-count">0</b></span>
+          <button class="btn btn--sm" id="add-pfield">+ Add field</button>
+        </div>
+        <div id="pfield-list"></div>
+
+        <div class="callout">
+          <b>Everything here applies to everyone at once.</b> Renaming a field renames
+          it on every file and keeps what is written in it. Reordering changes the
+          order the rows appear on the site. Removing one deletes it from every file,
+          along with anything written in it.
+          <br /><br />
+          <b>Fill for everyone</b> writes the same value into that field on every
+          file — useful for something like a shared year or city. Leave it empty to
+          wipe the field on everyone.
+          <br /><br />
+          Fields that only one person has stay on their own file and are not listed
+          here — flip them to <em>Everyone</em> from that person's record to bring
+          them in.
+        </div>
+      </div>
+    </section>
+
+    <!-- JOIN FORM -->
+    <section class="panel" data-panel="form">
+      <div class="crews-panel">
+        <div class="list__head" style="padding-left:0;padding-right:0">
+          <span>The form your friends fill in</span>
+          <a class="btn btn--sm" id="open-join" href="join.html" target="_blank" rel="noopener">Preview ↗</a>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label>Heading</label>
+            <input type="text" id="join-title" />
+          </div>
+          <div class="field">
+            <label>Thank-you heading</label>
+            <input type="text" id="join-done-title" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Intro line</label>
+          <textarea id="join-intro" rows="2"></textarea>
+        </div>
+        <div class="field">
+          <label>Thank-you message</label>
+          <textarea id="join-done-text" rows="2"></textarea>
+        </div>
+
+        <div class="field">
+          <label>Also ask for</label>
+          <label class="check"><input type="checkbox" id="join-ask-photo" /> A photo</label>
+          <label class="check"><input type="checkbox" id="join-ask-ig" /> Instagram handle</label>
+          <label class="check"><input type="checkbox" id="join-ask-crew" /> Which crew they belong to</label>
+        </div>
+
+        <div class="list__head" style="padding-left:0;padding-right:0">
+          <span>Questions to ask <b id="join-ask-count">0</b></span>
+          <span class="hint">untick anything too nosy for a first form</span>
+        </div>
+        <div id="join-ask-list"></div>
+
+        <div class="callout">
+          These are your shared member fields, so whatever a friend fills in drops
+          straight into the right boxes on their file. Add a field in
+          <b>Members</b> and it turns up here to tick on.
+        </div>
+      </div>
+    </section>
+
+    <!-- REQUESTS -->
+    <section class="panel" data-panel="requests">
+      <div class="crews-panel">
+        <div class="list__head" style="padding-left:0;padding-right:0">
+          <span>Waiting to join <b id="req-count">0</b></span>
+          <a class="btn btn--sm" id="copy-join" href="#">Copy the form link</a>
+        </div>
+        <div id="req-list"></div>
+        <div class="callout">
+          <b>How it works.</b> Send a friend <code>join.html</code> and they fill in their own
+          file — the same fields you use here. Their answers land in this list.
+          <br /><br />
+          Approving adds them to the site immediately. They stay here until you do,
+          so nothing appears on the site that you have not seen.
+        </div>
+      </div>
+    </section>
+
     <!-- ACCESS / PASSWORD -->
     <section class="panel" data-panel="access">
       <div class="crews-panel">
@@ -112,6 +228,13 @@
         </div>
         <div id="q-list"></div>
 
+        <div class="field" id="admin-pw-box">
+          <label>Admin password</label>
+          <button class="btn btn--sm" id="change-admin-pw" type="button">Change admin password</button>
+          <p class="hint">This is the password for <b>this editor</b> — separate from the
+            questions below, which are what visitors answer to see the site.</p>
+        </div>
+
         <div class="callout">
           <b>How it works.</b> A visitor gets one question at random and can ask for a
           different one. Answers are compared loosely — capitals, spaces, punctuation
@@ -132,6 +255,29 @@
     </section>
   </main>
 
+  <!-- bulk edit one field across everyone -->
+  <div class="modal" id="bulk" hidden>
+    <div class="modal__box">
+      <div class="modal__head">
+        <b>Edit one field for everyone</b>
+        <button class="btn btn--sm" id="bulk-close">Done</button>
+      </div>
+      <div class="bulk__bar">
+        <label class="bulk__pick">
+          <span>Field</span>
+          <select id="bulk-field"></select>
+        </label>
+        <label class="bulk__pick bulk__pick--grow">
+          <span>Set every one to</span>
+          <input type="text" id="bulk-all" placeholder="leave empty to edit individually" />
+        </label>
+        <button class="btn btn--sm" id="bulk-apply">Apply to all</button>
+      </div>
+      <div class="bulk__list" id="bulk-list"></div>
+      <p class="hint bulk__hint">Changes are held here until you press Save in the top bar.</p>
+    </div>
+  </div>
+
   <!-- photo picker -->
   <div class="modal" id="picker" hidden>
     <div class="modal__box">
@@ -143,7 +289,7 @@
     </div>
   </div>
 
-  <script src="sha256.js?v=14"></script>
-  <script src="admin.js?v=14"></script>
+  <script src="sha256.js?v=23"></script>
+  <script src="admin.js?v=23"></script>
 </body>
 </html>

@@ -62,7 +62,8 @@
   const watchAll = (nodes, step = 0.06, base = 0) =>
     [...nodes].forEach((n, i) => watch(n, base + i * step));
 
-  /* split a heading into per-character masks for the slide-up reveal */
+  /* Each letter rises out of its own mask, staggered across the line — the
+     reference site's effect, driven by GSAP there and by CSS here. */
   function splitText(node, text) {
     node.textContent = "";
     const words = String(text).split(" ");
@@ -70,15 +71,15 @@
       const w = el("span", "word");
       [...word].forEach((ch) => {
         const mask = el("span", "char-mask");
-        const c = el("span", "char", esc(ch));
-        mask.appendChild(c);
+        mask.appendChild(el("span", "char", esc(ch)));
         w.appendChild(mask);
       });
       node.appendChild(w);
       if (wi < words.length - 1) node.appendChild(document.createTextNode(" "));
     });
+
     const chars = node.querySelectorAll(".char");
-    chars.forEach((c, i) => c.style.setProperty("--d", 0.15 + i * 0.028 + "s"));
+    chars.forEach((c, i) => c.style.setProperty("--d", (0.1 + i * 0.035).toFixed(3) + "s"));
     if (REDUCED) { chars.forEach((c) => c.classList.add("is-in")); return; }
     requestAnimationFrame(() =>
       requestAnimationFrame(() => chars.forEach((c) => c.classList.add("is-in")))
@@ -141,7 +142,6 @@
     items.forEach((it) => book.appendChild(it));
     watchAll(items, 0.09);
     scatter(book, items, seedKey);
-    makeDraggable(items);
 
     /* images decide the collage height, so re-measure once each one lands */
     book.querySelectorAll("img").forEach((img) => {
@@ -193,41 +193,6 @@
     window.addEventListener("resize", debounce(apply, 200));
   }
 
-  /* rotate lives in `rotate:`, so dragging only touches `translate:` */
-  function makeDraggable(items) {
-    items.forEach((it) => {
-      let sx, sy, ox, oy, moved;
-      const move = (e) => {
-        const dx = e.clientX - sx, dy = e.clientY - sy;
-        if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
-        it.style.translate = `${ox + dx}px ${oy + dy}px`;
-      };
-      const up = () => {
-        window.removeEventListener("pointermove", move);
-        window.removeEventListener("pointerup", up);
-        if (moved) {
-          const stop = (ev) => {
-            ev.stopPropagation(); ev.preventDefault();
-            it.removeEventListener("click", stop, true);
-          };
-          it.addEventListener("click", stop, true);
-        }
-      };
-      it.addEventListener("pointerdown", (e) => {
-        if (e.button) return;
-        sx = e.clientX; sy = e.clientY;
-        const cur = (it.style.translate || "").match(/(-?[\d.]+)px\s+(-?[\d.]+)px/);
-        ox = cur ? +cur[1] : 0;
-        oy = cur ? +cur[2] : 0;
-        moved = false;
-        it.style.transition = "none";
-        it.style.zIndex = 50;
-        window.addEventListener("pointermove", move);
-        window.addEventListener("pointerup", up);
-      });
-    });
-  }
-
   /* ---------- files --------------------------------------------------------- */
 
   /* cross-fade one file out and the next one in, then re-measure the folder */
@@ -240,6 +205,7 @@
       if (folder) {
         sizeBody(folder);
         [60, 300].forEach((t) => setTimeout(() => sizeBody(folder), t));
+        settleOpen(folder);
       }
     }, 200);
   }
@@ -439,21 +405,47 @@
     });
   }
 
+  /* Height handling deliberately avoids resting on a transitioned value.
+     A running max-height transition wins over even an !important inline style,
+     so if the animation never gets a paint frame (backgrounded tab, zero-size
+     viewport, bfcache restore) the folder stays stuck shut. We animate to the
+     measured height, then hand control back to the content with `none`. */
+  const OPEN_MS = 780;
+
+  function bodyOf(f) { return f.querySelector(".folder__body"); }
+  function innerOf(f) { return f.querySelector(".folder__body-inner"); }
+
   function sizeBody(f) {
-    const body = f.querySelector(".folder__body");
-    const inner = f.querySelector(".folder__body-inner");
-    body.style.maxHeight = inner.scrollHeight + "px";
+    const body = bodyOf(f);
+    if (!f.classList.contains("is-open")) return;
+    if (body.style.maxHeight === "none") return;   /* already content-driven */
+    body.style.maxHeight = innerOf(f).scrollHeight + "px";
+  }
+
+  function settleOpen(f) {
+    const body = bodyOf(f);
+    clearTimeout(f._settle);
+    f._settle = setTimeout(() => {
+      if (f.classList.contains("is-open")) body.style.maxHeight = "none";
+    }, REDUCED ? 0 : OPEN_MS);
   }
 
   function openFolder(f, scroll) {
     document.querySelectorAll(".folder.is-open").forEach((o) => {
       if (o !== f) closeFolder(o);
     });
+    const body = bodyOf(f);
     f.classList.add("is-in", "is-open");
     f.style.zIndex = 100;
     if (stack) stack.classList.add("has-open");
 
-    requestAnimationFrame(() => sizeBody(f));
+    if (REDUCED) {
+      body.style.maxHeight = "none";
+    } else {
+      body.style.maxHeight = innerOf(f).scrollHeight + "px";
+      settleOpen(f);
+    }
+
     if (!f._ro) {
       let raf = 0;
       f._ro = new ResizeObserver(() => {
@@ -462,22 +454,28 @@
         raf = requestAnimationFrame(() => sizeBody(f));
       });
     }
-    f._ro.observe(f.querySelector(".folder__body-inner"));
+    f._ro.observe(innerOf(f));
     window.dispatchEvent(new Event("resize"));
     f.querySelectorAll("img").forEach((img) => {
       if (!img.complete) img.addEventListener("load", () => sizeBody(f), { once: true });
     });
-    [120, 400, 800].forEach((t) =>
-      setTimeout(() => { if (f.classList.contains("is-open")) sizeBody(f); }, t)
-    );
+    [120, 400].forEach((t) => setTimeout(() => sizeBody(f), t));
 
     if (scroll) setTimeout(() => f.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
   }
 
   function closeFolder(f) {
+    const body = bodyOf(f);
+    clearTimeout(f._settle);
+    /* pin the real height first, otherwise closing from `none` has nothing to
+       animate from and the folder simply vanishes */
+    if (body.style.maxHeight === "none" || !body.style.maxHeight) {
+      body.style.maxHeight = innerOf(f).scrollHeight + "px";
+      void body.offsetHeight;
+    }
     f.classList.remove("is-open");
     f.style.zIndex = "";
-    f.querySelector(".folder__body").style.maxHeight = "0px";
+    requestAnimationFrame(() => { body.style.maxHeight = "0px"; });
     if (f._ro) f._ro.disconnect();
   }
 
@@ -635,6 +633,35 @@
     });
   }
 
+  /* Big navigation at the end of every page — the header bar is deliberately
+     small, so the sections get a proper set of links here too. */
+  function buildPageNav(counts) {
+    const items = [
+      { href: "index.html#members", no: "01", label: "Members", page: "home",
+        note: counts.members + " on file" },
+      { href: "parties.html", no: "02", label: "Parties", page: "parties",
+        note: counts.parties + " logged" },
+      { href: "gallery.html", no: "03", label: "Gallery", page: "gallery",
+        note: counts.gallery + " photos" },
+    ];
+    const nav = el("nav", "page-nav");
+    nav.setAttribute("aria-label", "Sections");
+    items.forEach((it) => {
+      const a = el("a");
+      a.href = it.href;
+      if (it.page === PAGE) a.setAttribute("aria-current", "page");
+      a.innerHTML =
+        `<span class="page-nav__no">${it.no}</span>` +
+        `<span class="page-nav__label">${esc(it.label)}</span>` +
+        `<span class="page-nav__note">${esc(it.note)}</span>`;
+      nav.appendChild(a);
+    });
+    const foot = $(".site-footer");
+    if (foot) foot.parentNode.insertBefore(nav, foot);
+    else $("main").appendChild(nav);
+    watchAll(nav.children, 0.08);
+  }
+
   function hookAnchor(sel, get) {
     document.querySelectorAll('a[href="' + sel + '"]').forEach((a) =>
       a.addEventListener("click", (e) => {
@@ -735,7 +762,20 @@
     else if (PAGE === "gallery") buildGallery(data);
     else buildHome(data);
 
-    if (stack) watchAll(stack.querySelectorAll(".folder"), 0.08);
+    buildPageNav({
+      members: pad2(data.members.length),
+      parties: pad2(data.parties.length),
+      gallery: pad2((data.gallery || []).length),
+    });
+
+    /* every folder is there from the start — no scrolling to make them appear */
+    if (stack) {
+      const folders = stack.querySelectorAll(".folder");
+      folders.forEach((f) => f.style.setProperty("--d", "0s"));
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => folders.forEach((f) => f.classList.add("is-in")))
+      );
+    }
     document.querySelectorAll("[data-reveal]").forEach((n, i) => watch(n, 0.5 + i * 0.12));
     subheadWatcher();
 

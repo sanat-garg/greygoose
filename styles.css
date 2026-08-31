@@ -47,6 +47,8 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--f-serif);
+  font-optical-sizing: auto;
+  font-synthesis: none;          /* no faux bold/italic on Newsreader */
   font-size: 1rem;
   line-height: 1.25;
   -webkit-font-smoothing: antialiased;
@@ -69,25 +71,29 @@ button { font: inherit; color: inherit; }
 }
 [data-reveal].is-in { opacity: 1; transform: none; }
 
-/* per-character hero reveal — chars slide up out of a clipping mask */
+/* Hero heading: each letter rises out of its own clipping mask, the way the
+   reference site does it. The mask carries extra room below the baseline —
+   without it the glyphs look shaved as they arrive. */
+.word { display: inline-block; white-space: nowrap; }
 .char-mask {
   display: inline-block;
   overflow: clip;
-  vertical-align: baseline;
+  vertical-align: bottom;
+  padding-bottom: 0.14em;      /* clip room */
+  margin-bottom: -0.14em;      /* ...that costs no layout */
 }
 .char {
   display: inline-block;
-  transform: translateY(105%);
-  transition: transform 0.9s var(--ease);
+  transform: translateY(112%);
+  transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1);
   transition-delay: var(--d, 0s);
   will-change: transform;
 }
-.is-in .char, .char.is-in { transform: none; }
-.word { display: inline-block; white-space: nowrap; }
+.char.is-in { transform: translateY(0); }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  [data-reveal], .char, .folder, .scrap { transition: none !important; }
+  [data-reveal], .folder, .scrap, .char { transition: none !important; }
   [data-reveal] { opacity: 1; transform: none; }
   .char { transform: none; }
 }
@@ -149,9 +155,26 @@ body.show-subhead .site-header__file {
   font-family: var(--f-mono);
   font-size: 0.9rem;
 }
-.site-nav a { opacity: 0.8; transition: opacity 0.2s; }
-.site-nav a:hover, .site-nav a.is-current { opacity: 1; }
-.site-nav a.is-current { text-decoration: underline; text-underline-offset: 4px; }
+.site-nav a {
+  position: relative;
+  padding-bottom: 3px;
+  color: var(--muted);
+  transition: color 0.25s var(--ease);
+}
+.site-nav a::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 1px;
+  background: currentColor;
+  scale: 0 1;
+  transform-origin: left;
+  transition: scale 0.3s var(--ease);
+}
+.site-nav a:hover { color: var(--ink); }
+.site-nav a:hover::after { scale: 1 1; }
+.site-nav a.is-current { color: var(--ink); }
+.site-nav a.is-current::after { scale: 1 1; }
 
 /* ---------- Hero --------------------------------------------------------------*/
 
@@ -214,7 +237,8 @@ body.show-subhead .site-header__file {
   margin: 1.9rem 0 0;
   max-width: 50rem;
   font-size: clamp(1.05rem, 1.5vw, 1.24rem);
-  line-height: 1.42;
+  line-height: 1.5;
+  text-wrap: pretty;
   color: var(--muted);
 }
 .hero__meta {
@@ -239,9 +263,9 @@ body.show-subhead .site-header__file {
   background: var(--c);
   color: var(--on);
 
-  /* settle-into-the-stack entrance */
+  /* all folders arrive together on load — a short settle, no scroll trigger */
   opacity: 0;
-  transform: translateY(5rem) scale(0.985);
+  transform: translateY(1.6rem);
   transform-origin: 50% 0;
   transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
   transition-delay: var(--d, 0s);
@@ -284,8 +308,8 @@ body.show-subhead .site-header__file {
 .folder__cover {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 1.4rem;
+  justify-content: flex-start;
+  gap: 0.85rem;
   min-height: clamp(7rem, 13vh, 10rem);
   /* the extra bottom room is where the NEXT folder's tabs land, so they
      never sit on top of this folder's blurb */
@@ -295,7 +319,7 @@ body.show-subhead .site-header__file {
 }
 .folder__cover-top {
   display: flex;
-  align-items: center;
+  align-items: baseline;      /* box-centring mis-aligns Anton against mono */
   gap: 1.5rem;
 }
 .folder__cover-name {
@@ -309,9 +333,11 @@ body.show-subhead .site-header__file {
 .folder__names {
   margin: 0;
   font-family: var(--f-serif);
-  font-size: 1.05rem;
-  line-height: 1.5;
-  letter-spacing: 0.01em;
+  font-size: 1.15rem;
+  line-height: 1.4;
+  letter-spacing: 0.005em;
+  word-spacing: 0.04em;
+  text-wrap: pretty;
 }
 .folder__blurb {
   margin: 0;
@@ -448,7 +474,7 @@ body.show-subhead .site-header__file {
 .record__row:last-child { border-bottom: 1px solid rgba(25, 25, 25, 0.16); }
 .record__k { font-weight: 700; }
 
-.sheet__desc { font-size: 1.5rem; line-height: 1.4; }
+.sheet__desc { font-size: 1.5rem; line-height: 1.48; text-wrap: pretty; }
 .sheet__desc p { margin: 0 0 1rem; }
 .sheet__quote {
   margin: 1.8rem 0 0;
@@ -456,7 +482,8 @@ body.show-subhead .site-header__file {
   border-left: 2px solid rgba(25, 25, 25, 0.35);
   font-style: italic;
   font-size: 1.75rem;
-  line-height: 1.3;
+  line-height: 1.38;
+  text-wrap: pretty;
 }
 .sheet__socials { margin-top: 1.6rem; font-family: var(--f-mono); font-size: 0.85rem; }
 .sheet__socials a { border-bottom: 1px solid rgba(25, 25, 25, 0.4); }
@@ -482,16 +509,13 @@ body.show-subhead .site-header__file {
   position: relative;
   width: min(30rem, 78vw);
   margin: 0 auto 1.1rem;
-  cursor: grab;
-  touch-action: none;
   opacity: 0;
   transition: opacity var(--dur) var(--ease), translate var(--dur) var(--ease);
   translate: 0 2.5rem;
   transition-delay: var(--d, 0s);
 }
 .scrap.is-in { opacity: 1; translate: none; }
-.scrap:active { cursor: grabbing; }
-.scrap img { width: 100%; height: auto; display: block; }
+.scrap img { width: 100%; height: auto; display: block; cursor: zoom-in; }
 
 .scrap--photo {
   background: var(--sheet);
@@ -652,6 +676,56 @@ body.show-subhead .site-header__file {
   letter-spacing: 0.14em;
   color: var(--muted);
 }
+
+/* ---------- Big on-page navigation ------------------------------------------
+   The header is small by design, so the sections also get a full-width set of
+   links at the end of every page. */
+
+.page-nav {
+  max-width: none;
+  margin: 6rem var(--gutter) 0;
+  border-top: 1px solid var(--line);
+}
+.page-nav a {
+  display: flex;
+  align-items: baseline;
+  gap: 1.2rem;
+  padding: 1.5rem 0.4rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  transition: color 0.3s var(--ease), padding-left 0.3s var(--ease);
+}
+.page-nav a:hover { color: var(--ink); padding-left: 1.1rem; }
+.page-nav a[aria-current="page"] { color: var(--ink); }
+.page-nav__no {
+  font-family: var(--f-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  opacity: 0.65;
+}
+.page-nav__label {
+  font-family: var(--f-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: clamp(1.8rem, 5vw, 3.2rem);
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+.page-nav__note {
+  margin-left: auto;
+  font-family: var(--f-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+.page-nav a::after {
+  content: "\2192";
+  font-family: var(--f-mono);
+  opacity: 0.5;
+  transition: transform 0.3s var(--ease);
+}
+.page-nav a:hover::after { transform: translateX(5px); }
 
 /* ---------- Footer -------------------------------------------------------- */
 
@@ -879,51 +953,33 @@ body.is-locked .site-footer { filter: blur(9px); pointer-events: none; user-sele
 @media (max-width: 899px) {
   :root { --gutter: 16px; }
 
-  .stack { padding: 1.6rem 0 0; }
-  .folder {
-    margin-top: 0.45rem;
-    /* reorder so the name tabs can sit under the cover instead of above it */
-    display: flex;
-    flex-direction: column;
-  }
-  .folder__cover { order: 1; padding: 1.05rem 1.1rem; min-height: 3.6rem; gap: 0.8rem; }
-  .folder__tabs  { order: 2; }
-  .folder__body  { order: 3; }
+  /* Mobile keeps the same filing-cabinet UI as the laptop — the tabs stay
+     real protruding file tabs, just smaller and swipeable sideways. */
+  .stack { padding: 2.6rem 0 0; }
+  .folder { margin-top: 0.45rem; }
 
-  .folder__cover-name { opacity: 1; font-size: 1rem; }
-  .folder__cat-label { display: none; }
-
-  /* Without this strip there is no way to reach anyone but the first member.
-     Shown only while the folder is open, and swipeable. */
-  .folder__tabs { display: none; }
-  .folder.is-open .folder__tabs {
-    display: flex;
-    position: static;
-    max-width: none;
-    gap: 6px;
-    padding: 0 1.1rem 0.9rem;
+  .folder__tabs {
+    left: 5px;
+    max-width: calc(100% - 10px);
+    gap: 2px;
     overflow-x: auto;
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
-  .folder.is-open .folder__tabs::-webkit-scrollbar { display: none; }
+  .folder__tabs::-webkit-scrollbar { display: none; }
   .folder__tab {
-    font-size: 1.12rem;
-    line-height: 1.3;
-    padding: 0.4em 1em 0.45em;
-    border-radius: 999px;
-    border: 1px solid currentColor;
-    opacity: 0.72;
-    min-height: 38px;
+    font-size: 1.02rem;
+    padding: 0.36em 0.72em 0.42em;
+    opacity: 0.6;
   }
-  .folder__tab.is-active {
-    opacity: 1;
-    font-weight: 500;
-    background: rgba(0, 0, 0, 0.26);
-  }
+  .folder__tab.is-active { opacity: 1; }
 
+  .folder__cover { padding: 1.1rem 1.15rem 2.5rem; min-height: clamp(6.5rem, 22vh, 9rem); }
+  .folder__cover-name { font-size: 1.7rem; }
+  .folder__names { font-size: 1.02rem; }
   .folder__blurb { font-size: 0.72rem; }
+  .folder__count { font-size: 0.66rem; }
 
   .file { padding: 0 0.45rem 0.45rem; }
   .file__name { font-size: 2.3rem; margin: 0.1rem 0.85rem 0.8rem; }
@@ -939,8 +995,21 @@ body.is-locked .site-footer { filter: blur(9px); pointer-events: none; user-sele
   .pay { margin-top: 1.4rem; padding: 1.1rem 1.2rem; }
   .pay__price { font-size: 2.1rem; }
 
-  .scrapbook { padding: 0.6rem 0.8rem 1.2rem; }
-  .scrap { width: 100%; margin-bottom: 0.9rem; }
+  /* two polaroids to a row instead of one giant one per screen */
+  .scrapbook {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+    gap: 0.7rem;
+    padding: 0.8rem 0.8rem 1.2rem;
+  }
+  .scrap { width: 100%; margin: 0; }
+  .scrap--photo { padding: 6px 6px 22px; }
+  .scrap--photo figcaption { left: 8px; right: 8px; bottom: 6px; font-size: 0.58rem; }
+  .scrap--note { grid-column: 1 / -1; padding: 1.2rem 1.1rem 1.4rem; }
+  .scrap--note h3 { font-size: 1.25rem; }
+  .scrap--note p { font-size: 0.8rem; }
+  .scrap__clip { width: 16px; height: 36px; margin-left: -8px; top: -9px; border-width: 3px; }
 
   .file__nav {
     flex-wrap: wrap;
@@ -968,7 +1037,7 @@ body.is-locked .site-footer { filter: blur(9px); pointer-events: none; user-sele
 }
 
 @media (max-width: 620px) {
-  :root { --header-h: 66px; }          /* room for proper touch targets */
+  :root { --header-h: 62px; }
 
   .hero { padding-top: calc(var(--header-h) + 1.2rem); min-height: 52vh; }
   .hero--sub { min-height: 38vh; }
@@ -976,46 +1045,50 @@ body.is-locked .site-footer { filter: blur(9px); pointer-events: none; user-sele
   .hero__meta { margin-top: 1.6rem; font-size: 0.66rem; letter-spacing: 0.1em; }
   .hero__cue { margin-top: 1.8rem; font-size: 0.62rem; }
 
-  /* Header: solid, taller and a bigger wordmark so it holds the top of the
-     screen instead of floating. Pills give a real tap target and make the
-     current section obvious, which small underlined text did not. */
+  /* No wordmark up here — dropping it buys the room to make the section links
+     big enough to actually read and hit. */
   .site-header {
     background: var(--bg);
     border-bottom: 1px solid rgba(253, 250, 247, 0.22);
     box-shadow: 0 10px 30px -22px rgba(0, 0, 0, 0.9);
   }
-  .site-header__inner { justify-content: space-between; gap: 0.5rem; }
-  .wordmark {
-    position: static;
-    left: auto;
-    transform: none;
-    font-size: 1.02rem;
-    letter-spacing: 0.06em;
-  }
-  .site-header__file { display: none; }
-  body.show-subhead .wordmark { opacity: 1; }
+  .site-header__inner { justify-content: center; gap: 0; }
+  .wordmark, .site-header__file { display: none; }
 
-  .site-nav { margin-left: 0; gap: 5px; font-size: 0.66rem; }
+  .site-nav {
+    margin: 0;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    font-family: var(--f-ui);
+    font-size: 0.9rem;
+  }
   .site-nav a {
-    opacity: 1;
     display: flex;
     align-items: center;
-    /* 38px so it is actually thumb-sized, not just visually pill-shaped */
-    min-height: 38px;
-    padding: 0 0.85em;
-    border: 1px solid var(--line);
-    border-radius: 999px;
+    justify-content: center;
+    min-height: 44px;              /* full-width thumb target */
+    padding: 0;
+    font-weight: 500;
+    letter-spacing: 0.03em;
     color: var(--muted);
-    line-height: 1;
-    transition: color 0.2s var(--ease), background 0.2s var(--ease),
-                border-color 0.2s var(--ease);
+    border: 0;
+    border-radius: 0;
   }
-  .site-nav a.is-current {
-    background: var(--ink);
-    border-color: var(--ink);
-    color: var(--bg);
-    text-decoration: none;
+  /* the underline is the state, and it sticks — no hover-only affordance */
+  .site-nav a::after {
+    left: 18%; right: 18%;
+    bottom: -1px;
+    height: 2px;
+    scale: 0 1;
   }
+  .site-nav a.is-current { color: var(--ink); font-weight: 700; }
+  .site-nav a.is-current::after { scale: 1 1; }
+
+  .page-nav { margin: 4rem var(--gutter) 0; }
+  .page-nav a { padding: 1.15rem 0.2rem; gap: 0.8rem; }
+  .page-nav__note { display: none; }
 
   /* three items side by side never balanced at this width */
   .site-footer {
@@ -1030,19 +1103,105 @@ body.is-locked .site-footer { filter: blur(9px); pointer-events: none; user-sele
 
 @media (max-width: 400px) {
   .hero__title { font-size: 2.7rem; }
-  /* the wordmark stays readable here — shrinking it was what made the
-     header feel like an afterthought on a phone */
-  .wordmark { font-size: 0.92rem; letter-spacing: 0.04em; }
-  .site-nav { gap: 4px; font-size: 0.62rem; }
-  .site-nav a { padding: 0 0.72em; min-height: 36px; }
-  .folder__names { font-size: 1rem; }
+  .site-nav { font-size: 0.82rem; }
   .file__name { font-size: 2rem; }
-  .site-footer {
-    flex-direction: column;
-    text-align: center;
-    gap: 0.45rem;
-    margin-top: 3.5rem;
-  }
+  .folder__cover-name { font-size: 1.5rem; }
+  .folder__tab { font-size: 0.95rem; }
   .gallery-grid,
   .gallery-page .gallery-grid { columns: 2 6rem; }
+}
+
+/* ---------- Join form -------------------------------------------------------- */
+
+.join-tag {
+  font-family: var(--f-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.join {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 0 var(--gutter) 2rem;
+}
+.join__row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.join__field { display: block; margin-bottom: 1rem; }
+.join__field > span {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-family: var(--f-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.join__field > span em { font-style: normal; opacity: 0.6; }
+.join__field input,
+.join__field select,
+.join__field textarea {
+  width: 100%;
+  background: rgba(253, 250, 247, 0.045);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--ink);
+  font-family: var(--f-serif);
+  font-size: 1.05rem;
+  padding: 0.75rem 0.9rem;
+  outline: none;
+  transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
+}
+.join__field textarea { resize: vertical; line-height: 1.5; }
+.join__field input:focus,
+.join__field select:focus,
+.join__field textarea:focus {
+  border-color: var(--ink);
+  background: rgba(253, 250, 247, 0.07);
+}
+.join__field input[type="file"] { font-family: var(--f-mono); font-size: 0.8rem; padding: 0.6rem; }
+
+.join__foot { margin-top: 1.6rem; }
+.join__go {
+  border: 0;
+  border-radius: 3px;
+  background: var(--ink);
+  color: var(--bg);
+  font-family: var(--f-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.95em 2.1em;
+  cursor: pointer;
+  transition: opacity 0.2s var(--ease);
+}
+.join__go:hover { opacity: 0.85; }
+.join__go:disabled { opacity: 0.4; cursor: default; }
+.join__note {
+  margin: 0.9rem 0 0;
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.join__note.is-err { color: #ff9a9a; }
+
+.join__done {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 3rem var(--gutter) 4rem;
+  text-align: center;
+}
+.join__done[hidden] { display: none; }
+.join__done h2 {
+  margin: 0 0 0.7rem;
+  font-family: var(--f-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: clamp(2rem, 6vw, 3.4rem);
+}
+.join__done p { margin: 0; color: var(--muted); font-size: 1.1rem; }
+
+@media (max-width: 620px) {
+  .join__row { grid-template-columns: 1fr; gap: 0; }
 }

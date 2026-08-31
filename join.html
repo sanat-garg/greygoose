@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your file — Greygoose</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="styles.css?v=23" />
+</head>
+<body data-page="join">
+  <header class="site-header" id="top">
+    <div class="site-header__inner">
+      <span class="wordmark">Greygoose</span>
+      <nav class="site-nav"><span class="join-tag">New file</span></nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero hero--sub">
+      <h1 class="hero__title" data-split>YOUR FILE</h1>
+      <p class="hero__desc" data-reveal>
+        Fill this in and you get your own file in the archive. Skip anything you
+        would rather not answer — blanks simply do not show up.
+      </p>
+    </section>
+
+    <form class="join" id="join-form">
+      <div class="join__row">
+        <label class="join__field">
+          <span>Your name</span>
+          <input type="text" name="name" required autocomplete="name" />
+        </label>
+        <label class="join__field">
+          <span>Which crew?</span>
+          <select name="crew" id="join-crew"></select>
+        </label>
+      </div>
+
+      <div id="join-fields"></div>
+
+      <label class="join__field">
+        <span>A line or two about you</span>
+        <textarea name="blurb" rows="3"
+          placeholder="How you ended up in this group, in your own words."></textarea>
+      </label>
+
+      <div class="join__row">
+        <label class="join__field">
+          <span>Instagram <em>optional</em></span>
+          <input type="text" name="instagram" placeholder="handle, without the @" />
+        </label>
+        <label class="join__field">
+          <span>A photo of you <em>optional</em></span>
+          <input type="file" name="photo" id="join-photo" accept="image/*" />
+        </label>
+      </div>
+
+      <div class="join__foot">
+        <button class="join__go" type="submit" id="join-go">Send it in</button>
+        <p class="join__note" id="join-msg">
+          This goes to whoever runs the archive. Nothing appears on the site until they say so.
+        </p>
+      </div>
+    </form>
+
+    <div class="join__done" id="join-done" hidden>
+      <h2>Got it</h2>
+      <p>Your file is with the group now. It shows up once someone waves it through.</p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <span>Greygoose</span>
+    <span class="site-footer__mid">One of us, apparently.</span>
+    <span>© 2026</span>
+  </footer>
+
+  <script src="sha256.js?v=23"></script>
+  <script src="join.js?v=23"></script>
+</body>
+</html>
