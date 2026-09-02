@@ -680,7 +680,7 @@
   async function loadSharedParty(id, key) {
     try {
       const r = await fetch(
-        `api/party?id=${encodeURIComponent(id)}&k=${encodeURIComponent(key)}`,
+        `api/party.php?id=${encodeURIComponent(id)}&k=${encodeURIComponent(key)}`,
         { cache: "no-store" }
       );
       if (r.ok) return await r.json();

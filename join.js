@@ -155,7 +155,7 @@
         payload.photoData = await readFile(file);
       }
 
-      const res = await fetch("api/submit", {
+      const res = await fetch("api/submit.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

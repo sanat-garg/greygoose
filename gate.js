@@ -50,7 +50,7 @@ window.GGGate = (function () {
      Falling back to data.json is what makes this work on static hosting. */
   async function loadConfig() {
     try {
-      const r = await fetch("api/questions", { cache: "no-store" });
+      const r = await fetch("api/questions.php", { cache: "no-store" });
       if (r.ok) return Object.assign({ serverSide: true }, await r.json());
     } catch { /* no server — carry on */ }
 
@@ -74,7 +74,7 @@ window.GGGate = (function () {
 
   async function verify(cfg, question, answer) {
     if (cfg.serverSide) {
-      const r = await fetch("api/unlock", {
+      const r = await fetch("api/unlock.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: question.id, answer }),

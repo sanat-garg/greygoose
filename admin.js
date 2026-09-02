@@ -98,7 +98,7 @@
     const pw2 = $("#lock-pw2").value;
     try {
       if (lockMode === "login") {
-        const r = await fetch("api/admin-login", {
+        const r = await fetch("api/admin-login.php", {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ password: pw }),
         });
@@ -112,7 +112,7 @@
         ? { current: pw, new: pw2 }
         : { new: pw };
       if (lockMode === "setup" && pw !== pw2) return lockError("the two entries do not match");
-      const r = await fetch("api/admin-password", {
+      const r = await fetch("api/admin-password.php", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
@@ -129,7 +129,7 @@
   (async function guard() {
     let st;
     try {
-      st = await (await fetch("api/admin-status", { cache: "no-store" })).json();
+      st = await (await fetch("api/admin-status.php", { cache: "no-store" })).json();
     } catch {
       boot();                       /* no server: the read-only banner covers it */
       return;
@@ -185,7 +185,7 @@
   /* Tell the user before they type anything whether this page can save at all. */
   (async function checkServer() {
     try {
-      const r = await fetch("api/ping", { cache: "no-store" });
+      const r = await fetch("api/ping.php", { cache: "no-store" });
       if (!r.ok) throw new Error("HTTP " + r.status);
       await r.json();
       hasServer = true;
@@ -271,7 +271,7 @@
     setStatus("saving…");
     banner("");
     try {
-      const res = await fetch("api/save", {
+      const res = await fetch("api/save.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -1522,7 +1522,7 @@
       uploads.appendChild(line);
       try {
         const dataUrl = await readAsDataURL(file);
-        const res = await fetch("api/upload", {
+        const res = await fetch("api/upload.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: file.name, dataUrl }),
@@ -1601,7 +1601,7 @@
     if (stillUsed) return;
     if (!hasServer) return;
     if (!confirm(`Nothing uses this photo any more.\n\nAlso delete the file ${src} from disk? This cannot be undone.`)) return;
-    fetch("api/delete", {
+    fetch("api/delete.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ path: src }),
