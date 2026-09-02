@@ -1,0 +1,63 @@
+# ============================================================================
+# GREYGOOSE — shared hosting rules
+# ============================================================================
+
+# --- keep the private files private -----------------------------------------
+# .secret signs the login cookies and .adminpass holds the admin password hash.
+# Both sit in the site folder, so they must never be served.
+
+<FilesMatch "^\.(secret|adminpass|htaccess|gitignore)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# every dotfile, and the snapshot folder
+RedirectMatch 404 /\.(?!well-known)
+RedirectMatch 404 /\.backups/
+
+# --- don't serve the source of the API --------------------------------------
+<FilesMatch "\.(py|md|log)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# --- the archive itself ------------------------------------------------------
+# Uncomment the block below ONLY if you also set GG_GATE to true in
+# api/lib.php. It stops data.json being read directly, so the question gate
+# actually withholds something. The site then reads it through api/data.php.
+#
+# <Files "data.json">
+#     <IfModule mod_authz_core.c>
+#         Require all denied
+#     </IfModule>
+#     <IfModule !mod_authz_core.c>
+#         Order allow,deny
+#         Deny from all
+#     </IfModule>
+# </Files>
+
+# --- caching -----------------------------------------------------------------
+<IfModule mod_headers.c>
+    <FilesMatch "\.(json)$">
+        Header set Cache-Control "no-store"
+    </FilesMatch>
+    <FilesMatch "\.(css|js|svg|jpg|jpeg|png|webp|avif)$">
+        Header set Cache-Control "public, max-age=604800"
+    </FilesMatch>
+</IfModule>
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
+</IfModule>
+
+DirectoryIndex index.html index.php
