@@ -61,7 +61,7 @@
   };
 
   /* everything the form says and asks is set in the admin panel's Form tab */
-  fetch("data.json", { cache: "no-store" })
+  fetch("api/data.php", { cache: "no-store" })
     .then((r) => {
       if (!r.ok) throw new Error("HTTP " + r.status);
       return r.json();

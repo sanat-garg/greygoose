@@ -687,7 +687,7 @@
       if (r.status === 404 || r.status === 403) return null;
     } catch { /* no server — fall through */ }
 
-    const r = await fetch("data.json", { cache: "no-store" });
+    const r = await fetch("api/data.php", { cache: "no-store" });
     if (!r.ok) throw new Error("HTTP " + r.status);
     const d = await r.json();
     const p = (d.parties || []).find((x) => x.id === id);
@@ -745,7 +745,7 @@
 
     let data;
     try {
-      const r = await fetch("data.json", { cache: "no-store" });
+      const r = await fetch("api/data.php", { cache: "no-store" });
       if (!r.ok) throw new Error("HTTP " + r.status);
       data = await r.json();
     } catch (err) {

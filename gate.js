@@ -55,7 +55,7 @@ window.GGGate = (function () {
     } catch { /* no server — carry on */ }
 
     try {
-      const r = await fetch("data.json", { cache: "no-store" });
+      const r = await fetch("api/data.php", { cache: "no-store" });
       if (!r.ok) return null;
       const d = await r.json();
       const access = d.access || {};
