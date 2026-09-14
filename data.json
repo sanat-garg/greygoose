@@ -1,349 +1,23 @@
 {
   "hero": {
     "title": "GREYGOOSE",
-    "desc": "Seven college friends who take parties too seriously and everything else not seriously enough. Everyone has a file. Open one."
+    "desc": "A private drawer. Handle with care."
   },
-  "crews": [
-    {
-      "id": "founders",
-      "name": "The Founders",
-      "color": "#1E4BD7",
-      "text": "light",
-      "blurb": "The three who started it in a dorm common room with one speaker and bad ideas. Still sign off on every guest list."
-    },
-    {
-      "id": "regulars",
-      "name": "The Regulars",
-      "color": "#0C7866",
-      "text": "light",
-      "blurb": "First to arrive, last to leave, know where the spare key is. The reason the group chat never sleeps."
-    },
-    {
-      "id": "wildcards",
-      "name": "The Wildcards",
-      "color": "#581E70",
-      "text": "light",
-      "blurb": "Unpredictable attendance, guaranteed stories. Invite them and something will happen."
-    }
-  ],
-  "members": [
-    {
-      "id": "gg-01",
-      "crew": "founders",
-      "name": "Soham Garg",
-      "photo": "photos/m01.svg",
-      "record": {
-        "Signature drink": "Espresso Sour Greygoose",
-        "Party job": "Make everyone drunk as fuck!",
-        "Undefeated at": "Bowling",
-        "Most likely to": "Bully Adhyan",
-        "Catchphrase": "Pee...",
-        "School": "Bal Bharati, Rohini",
-        "DOB": "31/07/2009"
-      },
-      "blurb": "Started the group chat that became greygoose. Runs the calendar, the playlist, and the spreadsheet nobody else will admit they check.",
-      "photos": [
-        "photos/p01.svg",
-        "photos/p07.svg",
-        "photos/p11.svg"
-      ],
-      "socials": {
-        "instagram": "sohamgee"
-      }
-    },
-    {
-      "id": "gg-02",
-      "crew": "founders",
-      "name": "Arnav Jindal",
-      "photo": "photos/m02.svg",
-      "record": {
-        "Signature drink": "Gin and grapefruit",
-        "Party job": "Lighting, layout, vibe",
-        "Undefeated at": "Beer pong, left hand only",
-        "Most likely to": "Rearrange your furniture mid-party",
-        "Catchphrase": "It'll look better if we move the couch.",
-        "School": "2026",
-        "DOB": "Houston, TX"
-      },
-      "blurb": "Turns a room into a venue in twenty minutes. If the party has a floor plan, Maya drew it on the back of a receipt.",
-      "photos": [
-        "photos/p05.svg",
-        "photos/p02.svg"
-      ],
-      "socials": {
-        "instagram": "maya.o"
-      }
-    },
-    {
-      "id": "gg-03",
-      "crew": "founders",
-      "name": "Diego Salas",
-      "photo": "photos/m03.svg",
-      "record": {
-        "Signature drink": "Cafecito, then a beer",
-        "Party job": "Budget, snacks, damage control",
-        "Undefeated at": "Getting the deposit back",
-        "Most likely to": "Have a folding table in his trunk",
-        "Catchphrase": "Who's venmo-ing me?",
-        "School": "2025",
-        "DOB": "Miami, FL"
-      },
-      "blurb": "Keeps the whole operation solvent. Books the venue, splits the tab, and somehow always finds the cheaper option.",
-      "photos": [
-        "photos/p08.svg",
-        "photos/p12.svg"
-      ],
-      "socials": {}
-    },
-    {
-      "id": "gg-04",
-      "crew": "regulars",
-      "name": "Priya Nair",
-      "photo": "photos/m04.svg",
-      "record": {
-        "Signature drink": "Espresso martini",
-        "Party job": "Camera, group photo, aftermovie",
-        "Undefeated at": "Getting everyone to look at once",
-        "Most likely to": "Post the recap before you're home",
-        "Catchphrase": "One more, someone blinked.",
-        "School": "2026",
-        "DOB": "Edison, NJ"
-      },
-      "blurb": "The reason there is any proof these nights happened. Shoots on a point-and-shoot from 2004 and cuts the recap by breakfast.",
-      "photos": [
-        "photos/p03.svg",
-        "photos/p06.svg",
-        "photos/p09.svg"
-      ],
-      "socials": {
-        "instagram": "priya.shoots"
-      }
-    },
-    {
-      "id": "gg-05",
-      "crew": "regulars",
-      "name": "Tom Becker",
-      "photo": "photos/m05.svg",
-      "record": {
-        "Signature drink": "Whatever's in the fridge",
-        "Party job": "Ice, cups, cleanup crew",
-        "Undefeated at": "Remembering where everything goes",
-        "Most likely to": "Be doing dishes at 3am",
-        "Catchphrase": "I got it, I got it.",
-        "School": "2027",
-        "DOB": "Milwaukee, WI"
-      },
-      "blurb": "The one who makes it look easy the next morning. First on the cleanup, never asked twice.",
-      "photos": [
-        "photos/p10.svg",
-        "photos/p04.svg"
-      ],
-      "socials": {}
-    },
-    {
-      "id": "gg-06",
-      "crew": "wildcards",
-      "name": "Kai Zhou",
-      "photo": "photos/m06.svg",
-      "record": {
-        "Signature drink": "Red Bull, concerningly",
-        "Party job": "DJ after 1am",
-        "Undefeated at": "Reading a room",
-        "Most likely to": "Vanish at 11, reappear with a better speaker",
-        "Catchphrase": "last one, i promise",
-        "School": "2026",
-        "DOB": "Vancouver, CA"
-      },
-      "blurb": "Shows up half the time and runs the back half of the night when he does. The set nobody planned is usually the best one.",
-      "photos": [
-        "photos/p09.svg",
-        "photos/p12.svg",
-        "photos/p06.svg"
-      ],
-      "socials": {
-        "instagram": "kaimix"
-      }
-    },
-    {
-      "id": "gg-07",
-      "crew": "wildcards",
-      "name": "Robbie Dunne",
-      "photo": "photos/m07.svg",
-      "record": {
-        "Signature drink": "Guinness, room temp",
-        "Party job": "Stories, dares, questionable plans",
-        "Undefeated at": "Convincing the group to leave",
-        "Most likely to": "Turn a Tuesday into a road trip",
-        "Catchphrase": "hear me out",
-        "School": "2025",
-        "DOB": "Boston, MA"
-      },
-      "blurb": "The reason for at least three group legends. Attendance optional, chaos included.",
-      "photos": [
-        "photos/p07.svg",
-        "photos/p01.svg"
-      ],
-      "socials": {}
-    }
-  ],
-  "parties": [
-    {
-      "id": "ev-01",
-      "name": "Rooftop V",
-      "status": "upcoming",
-      "record": {
-        "Date": "Oct 31, 2026 — 10pm",
-        "Theme": "All black, one bright thing",
-        "Where": "House 12 roof",
-        "Headcount": "capped at 90",
-        "Soundtrack": "Kai, midnight onward",
-        "House rule": "Shoes off on the good rug"
-      },
-      "blurb": "Fifth edition of the one that started it. Come early, the roof fills up fast and Diego actually counts.",
-      "photos": [
-        "photos/p01.svg",
-        "photos/p03.svg",
-        "photos/p06.svg"
-      ],
-      "share": "RQbtPaCINGbC",
-      "payment": {
-        "enabled": true,
-        "price": "40000",
-        "currency": "INR",
-        "note": "Covers the bar, the sound and the roof.",
-        "link": ""
-      }
-    },
-    {
-      "id": "ev-02",
-      "name": "Friendsgiving",
-      "status": "upcoming",
-      "record": {
-        "Date": "Nov 22, 2026 — 6pm",
-        "Theme": "Bring a dish or bring a story",
-        "Where": "House 12, long table",
-        "Headcount": "40, seated",
-        "Soundtrack": "something calm for once",
-        "House rule": "One toast each, keep it short"
-      },
-      "blurb": "The sit-down one. Phones in a bowl, everyone cooks something, Diego does the math on the turkey.",
-      "photos": [
-        "photos/p10.svg",
-        "photos/p02.svg"
-      ],
-      "share": "tzER6gjFvB-c",
-      "payment": {
-        "enabled": true,
-        "price": "600",
-        "currency": "INR",
-        "note": "Covers the food. Bring nothing but yourself.",
-        "link": ""
-      }
-    },
-    {
-      "id": "ev-03",
-      "name": "Lake Day",
-      "status": "past",
-      "record": {
-        "Date": "Jun 14, 2026",
-        "Theme": "None. It was a lake.",
-        "Where": "Robbie's cousin's dock",
-        "Headcount": "≈ 30",
-        "Soundtrack": "one speaker, low battery",
-        "Damage report": "One phone overboard, no injuries",
-        "MVP": "Tom, who remembered sunscreen for everyone"
-      },
-      "blurb": "Left at 7am in three cars. Came back sunburnt and quiet. Universally agreed to be a top-three greygoose day.",
-      "photos": [
-        "photos/p05.svg",
-        "photos/p09.svg",
-        "photos/p12.svg"
-      ],
-      "share": "siyo_9APIdcd",
-      "payment": {
-        "enabled": false,
-        "price": "",
-        "currency": "INR",
-        "note": "",
-        "link": ""
-      }
-    },
-    {
-      "id": "ev-04",
-      "name": "The First One",
-      "status": "past",
-      "record": {
-        "Date": "Sep 30, 2023",
-        "Theme": "We didn't know to have one",
-        "Where": "Dorm common room, 2nd floor",
-        "Headcount": "≈ 25, mostly by accident",
-        "Soundtrack": "a laptop on a chair",
-        "Damage report": "RA visit at 12:40, warning only",
-        "MVP": "The speaker, RIP"
-      },
-      "blurb": "Where greygoose started. Twenty-five people, one playlist, and the group chat that never got muted after.",
-      "photos": [
-        "photos/p07.svg",
-        "photos/p11.svg"
-      ],
-      "share": "Tb4YzyaAhQu-",
-      "payment": {
-        "enabled": false,
-        "price": "",
-        "currency": "INR",
-        "note": "",
-        "link": ""
-      }
-    }
-  ],
-  "gallery": [
-    "photos/p01.svg",
-    "photos/p02.svg",
-    "photos/p03.svg",
-    "photos/p04.svg",
-    "photos/p05.svg",
-    "photos/p06.svg",
-    "photos/p07.svg",
-    "photos/p08.svg",
-    "photos/p09.svg",
-    "photos/p10.svg",
-    "photos/p11.svg",
-    "photos/p12.svg"
-  ],
+  "crews": [],
+  "members": [],
+  "parties": [],
+  "gallery": [],
   "access": {
     "enabled": true,
     "title": "Answer this",
     "intro": "This web-page is not public. Answer one thing only the group would know. One word only.",
-    "questions": [
-      {
-        "id": "q1",
-        "question": "What is the second name of Adhyan?",
-        "hash": "sha256:e81dfe69841ad2f7b5790b63e998f0febaf3b29acd732881975130761b98e2c7"
-      },
-      {
-        "id": "qmtgz8cwn1ztc",
-        "question": "who is the kind of dc?",
-        "hash": "sha256:24e2ba9fccb97e772be6578c125785b09bc22f18b75abb593335cf1607869cc2"
-      },
-      {
-        "id": "qmtgz8nj3gvkg",
-        "question": "who is the sister of arnav?",
-        "hash": "sha256:269c46a11954154246139192bc2b5732c45148e12a7a40ca8aa8d0b09b0e61ca"
-      },
-      {
-        "id": "qmtgz8whs5l9b",
-        "question": "who is queen?",
-        "hash": "sha256:30168c6f5e9ebd3b8c8a22e79d32724c85cc42be3270ec028bb0cd32e0e9f50c"
-      }
-    ]
+    "questions": []
   },
   "fields": {
     "members": [
-      "School",
-      "DOB",
-      "Party job",
-      "Undefeated at",
-      "Most likely to",
+      "Role",
+      "Joined",
+      "Signature drink",
       "Catchphrase"
     ],
     "parties": [
@@ -351,31 +25,23 @@
       "Theme",
       "Where",
       "Headcount",
-      "Soundtrack",
-      "House rule",
-      "Damage report",
-      "MVP"
+      "House rule"
     ]
   },
   "submissions": [],
   "joinForm": {
     "title": "YOUR FILE",
-    "intro": "Fill this in and you get your own file in the archive. Skip anything you would rather not answer — blanks simply do not show up.",
+    "intro": "Fill this in and you get your own file in the archive. Skip anything you would rather not answer \u2014 blanks simply do not show up.",
     "doneTitle": "Got it",
     "doneText": "Your file is with the group now. It shows up once someone waves it through.",
     "askPhoto": true,
     "askInstagram": true,
     "askCrew": true,
     "ask": [
-      "Class of",
-      "Hometown",
-      "Lives",
-      "Studying",
-      "In greygoose since",
+      "Name",
+      "Role",
+      "Joined",
       "Signature drink",
-      "Party job",
-      "Undefeated at",
-      "Most likely to",
       "Catchphrase",
       "Hello"
     ],
